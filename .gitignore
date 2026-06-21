@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+# Angular
+bibliotheque-front/node_modules/
+bibliotheque-front/dist/
+bibliotheque-front/.angular/
