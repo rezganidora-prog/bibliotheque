@@ -3,19 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Auth } from '../../services/auth';
-
-interface BorrowEntry {
-  title: string;
-  author: string;
-  borrowDate: string;
-  returnDate: string;
-  status: 'active' | 'returned';
-}
-
-interface FavoriteBook {
-  title: string;
-  author: string;
-}
+import { Api } from '../../services/api'; // Correction: Importe 'Api' depuis 'api'
 
 @Component({
   selector: 'app-student-profile',
@@ -26,63 +14,23 @@ interface FavoriteBook {
 })
 export class StudentProfileComponent implements OnInit {
 
-  readerName =
-    localStorage.getItem('reader_name') || 'Dorra';
-
+  readerName = localStorage.getItem('reader_name') || 'Etudiant';
   readerEmail = this.getEmail();
+  userId: number = 0;
 
-  // Onglet actif du profil
   activeTab: string = 'overview';
-
-  // Historique d'emprunts (simulé)
-  borrowHistory: BorrowEntry[] = [
-    {
-      title: 'Le Petit Prince',
-      author: 'Antoine de Saint-Exupéry',
-      borrowDate: '12 Mai 2025',
-      returnDate: '26 Mai 2025',
-      status: 'returned'
-    },
-    {
-      title: '1984',
-      author: 'George Orwell',
-      borrowDate: '1 Juin 2025',
-      returnDate: '15 Juin 2025',
-      status: 'active'
-    },
-    {
-      title: "L'Alchimiste",
-      author: 'Paulo Coelho',
-      borrowDate: '20 Avril 2025',
-      returnDate: '4 Mai 2025',
-      status: 'returned'
-    },
-    {
-      title: 'Fahrenheit 451',
-      author: 'Ray Bradbury',
-      borrowDate: '8 Mars 2025',
-      returnDate: '22 Mars 2025',
-      status: 'returned'
-    }
-  ];
-
-  // Livres favoris (simulé)
-  favoriteBooks: FavoriteBook[] = [
-    { title: "Harry Potter à l'école des sorciers", author: 'J.K. Rowling' },
-    { title: 'Le Petit Prince', author: 'Antoine de Saint-Exupéry' },
-    { title: "L'Étranger", author: 'Albert Camus' },
-    { title: 'Les Misérables', author: 'Victor Hugo' },
-    { title: "Mémoires d'une geisha", author: 'Arthur Golden' },
-    { title: 'Le Seigneur des Anneaux', author: 'J.R.R. Tolkien' }
-  ];
+  borrowHistory: any[] = [];
+  favoriteBooks: any[] = [];
 
   tempName = '';
   tempPassword = '';
   tempConfirmPassword = '';
   isEditing = false;
+  isLoading = true;
 
   constructor(
     private auth: Auth,
+    private apiService: Api, // Correction: Utilise 'Api' comme type
     private router: Router
   ) {
     this.tempName = this.readerName;
@@ -91,19 +39,70 @@ export class StudentProfileComponent implements OnInit {
   ngOnInit(): void {
     if (!this.auth.isLoggedIn()) {
       this.router.navigate(['/login']);
+      return;
     }
+    this.getUserIdFromToken();
+    this.loadBorrowHistory();
+    this.loadFavoriteBooks();
+  }
+
+  getUserIdFromToken(): void {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        // Note: le backend doit retourner l'userId dans le token
+        this.userId = payload.userId || 1;
+      } catch (e) {
+        this.userId = 1;
+      }
+    }
+  }
+
+  loadBorrowHistory(): void {
+    this.isLoading = true;
+    this.apiService.getUserEmprunts(this.userId).subscribe({
+      next: (emprunts: any) => { // Type explicite 'any'
+        this.borrowHistory = emprunts.map((e: any) => ({
+          titre: e.book.titre,
+          auteur: e.book.auteur,
+          dateEmprunt: e.dateEmprunt,
+          dateRetourPrevue: e.dateRetourPrevue,
+          statut: e.statut,
+          status: e.statut === 'ACTIF' ? 'active' : 'returned'
+        }));
+        this.isLoading = false;
+      },
+      error: (err: any) => { // Type explicite 'any'
+        console.error('Erreur chargement emprunts:', err);
+        this.borrowHistory = this.getMockBorrowHistory();
+        this.isLoading = false;
+      }
+    });
+  }
+
+  loadFavoriteBooks(): void {
+    this.apiService.getAllBooks().subscribe({
+      next: (books: any) => { // Type explicite 'any'
+        this.favoriteBooks = books.slice(0, 6).map((b: any) => ({
+          titre: b.titre,
+          auteur: b.auteur
+        }));
+      },
+      error: () => {
+        this.favoriteBooks = this.getMockFavoriteBooks();
+      }
+    });
   }
 
   getEmail(): string {
     const token = localStorage.getItem('token');
-
-    if (!token || token.split('.').length < 2) return 'dorra.etudiante@exemple.com';
-
+    if (!token || token.split('.').length < 2) return 'etudiant@exemple.com';
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub;
+      return payload.sub || 'etudiant@exemple.com';
     } catch {
-      return 'dorra.etudiante@exemple.com';
+      return 'etudiant@exemple.com';
     }
   }
 
@@ -115,45 +114,26 @@ export class StudentProfileComponent implements OnInit {
     this.activeTab = tab;
   }
 
-  // Style de couverture pour les favoris (même logique que dashboard)
   getBookCoverStyle(title: string): { [key: string]: string } {
     const titleLower = title.toLowerCase();
-
     if (titleLower.includes('harry') || titleLower.includes('potter')) {
-      return { background: 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)', color: '#f0f0f0' }; // Gris-bleu foncé
+      return { background: 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)', color: '#f0f0f0' };
     }
     if (titleLower.includes('petit prince')) {
-      return { background: 'linear-gradient(135deg, #f7dc6f 0%, #f1c40f 100%)', color: '#333333' }; // Jaune/Or clair
+      return { background: 'linear-gradient(135deg, #f7dc6f 0%, #f1c40f 100%)', color: '#333333' };
     }
     if (titleLower.includes('étranger') || titleLower.includes('etranger')) {
-      return { background: 'linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%)', color: '#333333' }; // Gris clair
+      return { background: 'linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%)', color: '#333333' };
     }
-    if (titleLower.includes('misérables') || titleLower.includes('miserables')) {
-      return { background: 'linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%)', color: '#f0f0f0' }; // Violet
-    }
-    if (titleLower.includes('geisha')) {
-      return { background: 'linear-gradient(135deg, #f3a683 0%, #f7d794 100%)', color: '#333333' }; // Pêche/Or doux
-    }
-    if (titleLower.includes('seigneur') || titleLower.includes('anneaux')) {
-      return { background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)', color: '#f0f0f0' }; // Vert
-    }
-    if (titleLower.includes('alchimiste')) {
-      return { background: 'linear-gradient(135deg, #f1c40f 0%, #f39c12 100%)', color: '#333333' }; // Orange/Or
-    }
-    if (titleLower.includes('fahrenheit')) {
-      return { background: 'linear-gradient(135deg, #e67e22 0%, #d35400 100%)', color: '#f0f0f0' }; // Orange/Rouge intense
-    }
-
-    // Fallback dynamique
     let hash = 0;
     for (let i = 0; i < title.length; i++) {
       hash = title.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const hues = [20, 60, 120, 180, 240, 300]; // Gamme de teintes plus équilibrée
+    const hues = [20, 60, 120, 180, 240, 300];
     const hue = hues[Math.abs(hash) % hues.length];
     return {
-      background: `linear-gradient(135deg, hsl(${hue}, 60%, 40%) 0%, hsl(${hue}, 50%, 30%) 100%)`, // Dégradé plus lumineux
-      color: '#ae9e9e'
+      background: `linear-gradient(135deg, hsl(${hue}, 60%, 40%) 0%, hsl(${hue}, 50%, 30%) 100%)`,
+      color: '#f0f0f0'
     };
   }
 
@@ -165,7 +145,9 @@ export class StudentProfileComponent implements OnInit {
     try {
       const payload = JSON.parse(atob(parts[1]));
       return payload.role || '';
-    } catch (e) { return ''; }
+    } catch {
+      return '';
+    }
   }
 
   navigateTo(route: string): void {
@@ -200,9 +182,32 @@ export class StudentProfileComponent implements OnInit {
       alert('Les mots de passe ne correspondent pas.');
       return;
     }
-    localStorage.setItem('reader_name', this.tempName.trim());
-    this.readerName = this.tempName.trim();
-    this.isEditing = false;
-    alert('Profil mis à jour avec succès !');
+
+    this.apiService.updateProfile(this.userId, this.tempName.trim(), this.tempPassword).subscribe({
+      next: () => {
+        localStorage.setItem('reader_name', this.tempName.trim());
+        this.readerName = this.tempName.trim();
+        this.isEditing = false;
+        alert('Profil mis à jour avec succes !');
+      },
+      error: (err: any) => { // Type explicite 'any'
+        console.error('Erreur mise à jour profil:', err);
+        alert('Erreur lors de la mise à jour du profil.');
+      }
+    });
+  }
+
+  getMockBorrowHistory(): any[] {
+    return [
+      { titre: 'Le Petit Prince', auteur: 'Antoine de Saint-Exupéry', dateEmprunt: '12 Mai 2025', dateRetourPrevue: '26 Mai 2025', status: 'returned' },
+      { titre: '1984', auteur: 'George Orwell', dateEmprunt: '1 Juin 2025', dateRetourPrevue: '15 Juin 2025', status: 'active' }
+    ];
+  }
+
+  getMockFavoriteBooks(): any[] {
+    return [
+      { titre: "Harry Potter à l'école des sorciers", auteur: 'J.K. Rowling' },
+      { titre: 'Le Petit Prince', auteur: 'Antoine de Saint-Exupéry' }
+    ];
   }
 }

@@ -60,12 +60,10 @@ export class LoginComponent implements OnInit {
 
   getReaderEmail(): string {
     const token = localStorage.getItem('token');
-    if (!token || typeof token !== 'string') return '';
-    const parts = token.split('.');
-    if (parts.length < 2) return '';
+    if (!token || token.split('.').length < 2) return 'etudiant@exemple.com';
     try {
-      const payload = JSON.parse(atob(parts[1]));
-      return payload.sub || '';
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.sub || 'etudiant@exemple.com';
     } catch (e) { return ''; }
   }
 
@@ -108,10 +106,11 @@ export class LoginComponent implements OnInit {
   onSubmit() {
     this.errorMessage = '';
     this.successMessage = '';
-    this.isLoading = true;
+    this.isLoading = false; // Initialiser à false, sera mis à true si l'opération commence
 
     if (this.isLoginMode) {
       // MODE CONNEXION
+      this.isLoading = true; // Mettre à true avant l'appel API
       this.loginAndRedirect(this.credentials.email, this.credentials.password);
     } else {
       // MODE INSCRIPTION + connexion automatique
@@ -121,13 +120,14 @@ export class LoginComponent implements OnInit {
         password: this.credentials.password
       };
 
+      this.isLoading = true; // Mettre à true avant l'appel API
       this.auth.register(regData).subscribe({
         next: () => {
           localStorage.setItem('reader_name', regData.nom);
           // Connexion automatique après inscription
           this.loginAndRedirect(regData.email, regData.password);
         },
-        error: (err) => {
+        error: (err: any) => { // Type explicite 'any'
           this.isLoading = false;
           this.errorMessage = err.error?.message || "Erreur lors de la création de l'abonnement.";
         }
@@ -160,7 +160,7 @@ export class LoginComponent implements OnInit {
           this.router.navigate(['/dashboard']);
         }
       },
-      error: (err) => {
+      error: (err: any) => { // Type explicite 'any'
         this.isLoading = false;
         this.errorMessage = err.error?.message || 'Identifiants invalides ou serveur indisponible.';
       }

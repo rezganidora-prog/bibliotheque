@@ -1,293 +1,375 @@
 <div class="admin-layout">
-  <!-- BARRE LATÉRALE GAUCHE (SIDEBAR) -->
-  <aside class="sidebar">
-    <!-- LOGO DORÉ AVEC ICÔNE SVG -->
-    <div class="logo">
-      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-      </svg>
-      <div class="logo-text">
-        <span class="logo-main">L'ARCHE</span>
-        <span class="logo-sub">ESPACE ADMIN</span>
-      </div>
-    </div>
 
-    <!-- MENU DE NAVIGATION PRINCIPAL -->
-    <ul class="menu">
-      <li class="menu-item active">
-        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="9"></rect>
-          <rect x="14" y="3" width="7" height="5"></rect>
-          <rect x="14" y="12" width="7" height="9"></rect>
-          <rect x="3" y="16" width="7" height="5"></rect>
-        </svg>
-        <span>Tableau de bord</span>
-      </li>
-    </ul>
-
-    <!-- SECTION DE COMPTE -->
-    <div class="account-menu">
-      <h4>MON COMPTE</h4>
-      <ul>
-        <li class="menu-item" (click)="goToProfile()">
-          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span>Mon profil</span>
-        </li>
-
-      </ul>
-    </div>
-
-    <!-- FOOTER DE SIDEBAR -->
-    <div class="sidebar-footer">
-      <p>© 2026 L'Arche des Livres</p>
-      <p>Administration</p>
-    </div>
-  </aside>
-
-  <!-- CONTENU PRINCIPAL -->
-  <main class="content">
-    <!-- EN-TÊTE SUPÉRIEUR (TOP HEADER) -->
-    <div class="top-header">
-      <div class="welcome-text">
-        <h1>Espace Administration</h1>
-        <p>Gérez le catalogue et les réservations de l'Arche</p>
-      </div>
-
-      <div class="header-right">
-        <!-- Profil Mini -->
-        <div class="profile-mini">
-          <div class="avatar">
-            {{ getReaderName().charAt(0).toUpperCase() }}
-          </div>
-          <div class="profile-meta">
-            <strong>{{ getReaderName() }}</strong>
-            <span class="role">Administrateur</span>
-          </div>
-          <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </div>
-
-        <button class="logout-btn" (click)="logout()">
-          Déconnexion
-        </button>
-      </div>
-    </div>
-
-    <!-- STATISTIQUES (STATS GRID) -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon-wrapper book-blue">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+    <div class="sidebar-header">
+      <div class="logo" (click)="navigateTo('/admin')">
+        <div class="logo-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
           </svg>
         </div>
-        <div class="stat-info">
-          <h2>{{ totalBooks }}</h2>
-          <p>Total des livres</p>
+        <div class="logo-text" *ngIf="!sidebarCollapsed">
+          <span class="logo-main">L'ARCHE</span>
+          <span class="logo-sub">DES LIVRES</span>
         </div>
       </div>
+      <button class="collapse-btn" (click)="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline *ngIf="!sidebarCollapsed" points="15 18 9 12 15 6"></polyline>
+          <polyline *ngIf="sidebarCollapsed" points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
 
-      <div class="stat-card">
-        <div class="stat-icon-wrapper cal-orange">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <li class="nav-item active">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Tableau de bord</span>
+        </li>
+        <li class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Livres</span>
+        </li>
+        <li class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Utilisateurs</span>
+        </li>
+        <li class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Emprunts</span>
+        </li>
+        <li class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Réservations</span>
+        </li>
+        <li class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Statistiques</span>
+        </li>
+        <li class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Notifications</span>
+          <span class="nav-badge" *ngIf="!sidebarCollapsed">3</span>
+        </li>
+        <li class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Paramètres</span>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-avatar-wrap">
+        <div class="user-avatar-sidebar">{{ getInitial() }}</div>
+      </div>
+      <div class="user-info" *ngIf="!sidebarCollapsed">
+        <strong>{{ readerName }}</strong>
+        <span>Administrateur</span>
+      </div>
+      <button class="more-btn" *ngIf="!sidebarCollapsed">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle>
+        </svg>
+      </button>
+    </div>
+
+    <div class="sidebar-logout" (click)="logout()">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+      </span>
+      <span class="nav-label" *ngIf="!sidebarCollapsed">Se déconnecter</span>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Bonjour {{ readerName }} ! 👋</h1>
+        <p>Voici un aperçu général de votre bibliothèque.</p>
+      </div>
+      <div class="topbar-right">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" placeholder="Rechercher un livre, un lecteur..." [(ngModel)]="searchTerm" />
+        </div>
+        <div class="notif-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notif-dot">3</span>
+        </div>
+        <div class="date-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-        </div>
-        <div class="stat-info">
-          <h2>{{ activeReservations }}</h2>
-          <p>Réservations actives</p>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon-wrapper book-green">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
-            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
-            <polyline points="12 6 12 12 16 14"></polyline>
+          <span>{{ todayDate }}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+            <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
-        </div>
-        <div class="stat-info">
-          <h2>{{ booksLoaned }}</h2>
-          <p>Livres empruntés</p>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon-wrapper returns-red">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-        </div>
-        <div class="stat-info">
-          <h2>{{ returnsDueToday }}</h2>
-          <p>Retours attendus</p>
         </div>
       </div>
     </div>
 
-    <!-- Row 2 – Two panels side‑by‑side -->
-    <div class="panels">
-      <!-- Recent Reservations table -->
-      <div class="panel reservations">
-        <h3>Réservations récentes</h3>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Étudiant</th>
-              <th>Livre</th>
-              <th>Date</th>
-              <th>Statut</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let r of recentReservations; let idx = index">
-              <td>{{ r.student }}</td>
-              <td>{{ r.book }}</td>
-              <td>{{ r.date }}</td>
-              <td>
-                <div class="status-action-cell">
-                  <span class="badge" [ngClass]="{'badge-pending': r.status==='En attente','badge-approved': r.status==='Approuvé','badge-refused': r.status==='Refusé'}">
-                    {{ r.status }}
-                  </span>
-                  <div class="action-buttons-mini" *ngIf="r.status === 'En attente'">
-                    <button class="icon-btn-success" (click)="approveReservation(idx)" title="Approuver">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mini-icon">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </button>
-                    <button class="icon-btn-danger" (click)="rejectReservation(idx)" title="Refuser">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mini-icon">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Quick Actions panel -->
-      <div class="panel quick-actions">
-        <h3>Actions rapides</h3>
-        <button class="btn" (click)="addBook()">
-          <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Ajouter un livre
-        </button>
-        <button class="btn" (click)="validateReservations()">
-          <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          Valider les réservations
-        </button>
-        <button class="btn" (click)="markAsReturned()">
-          <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 10 4 15 9 20"></polyline>
-            <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
-          </svg>
-          Marquer comme retourné
-        </button>
+    <!-- STATS CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card" *ngFor="let stat of statsCards">
+        <div class="stat-icon" [style.background]="stat.iconBg">
+          <span [innerHTML]="stat.icon"></span>
+        </div>
+        <div class="stat-body">
+          <p class="stat-label">{{ stat.label }}</p>
+          <h2 class="stat-value">{{ stat.value | number }}</h2>
+          <div class="stat-change" [class.positive]="stat.positive" [class.negative]="!stat.positive">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline *ngIf="stat.positive" points="18 15 12 9 6 15"></polyline>
+              <polyline *ngIf="!stat.positive" points="6 9 12 15 18 9"></polyline>
+            </svg>
+            <span>{{ stat.change }}</span>
+            <span class="vs">vs mois dernier</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Row 3 – Full‑width Books catalog -->
-    <div class="catalog">
-      <h3>Catalogue des livres</h3>
-      <table class="table catalog-table">
-        <thead>
-          <tr>
-            <th>Couverture</th>
-            <th>Titre</th>
-            <th>Auteur</th>
-            <th>Catégorie</th>
-            <th>Exemplaires</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let b of booksCatalog">
-            <td>
-              <img *ngIf="b.cover; else fallbackCover" [src]="b.cover" alt="Couverture" class="thumb" />
-              <ng-template #fallbackCover>
-                <div class="thumb-fallback">
-                  <span>{{ b.titre ? b.titre.substring(0, 2).toUpperCase() : 'BK' }}</span>
-                </div>
-              </ng-template>
-            </td>
-            <td>{{ b.titre }}</td>
-            <td>{{ b.auteur }}</td>
-            <td>{{ b.category || 'Général' }}</td>
-            <td>{{ b.quantite }}</td>
-            <td>
-              <button class="icon-btn" (click)="editBook(b)" title="Modifier">
-                <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-              </button>
-              <button class="icon-btn" (click)="deleteBook(b)" title="Supprimer">
-                <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      
-      <!-- Simple pagination stub -->
-      <div class="pagination">
-        <button class="page-btn" disabled>&laquo; Précédent</button>
-        <span class="page-info">Page 1 sur 1</span>
-        <button class="page-btn" disabled>Suivant &raquo;</button>
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+      <!-- Line chart -->
+      <div class="chart-card chart-main">
+        <div class="chart-header">
+          <h3>Évolution des emprunts et retours</h3>
+          <div class="chart-legend">
+            <span class="legend-dot blue"></span><span>Emprunts</span>
+            <span class="legend-dot green"></span><span>Retours</span>
+          </div>
+          <div class="chart-filter">30 derniers jours ▾</div>
+        </div>
+        <div class="line-chart-wrap">
+          <svg class="line-chart-svg" viewBox="0 0 700 220" preserveAspectRatio="none">
+            <!-- Grid lines -->
+            <line x1="0" y1="44" x2="700" y2="44" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="0" y1="88" x2="700" y2="88" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="0" y1="132" x2="700" y2="132" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="0" y1="176" x2="700" y2="176" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
+            <!-- Y labels -->
+            <text x="0" y="42" fill="#9ca3af" font-size="11">250</text>
+            <text x="0" y="86" fill="#9ca3af" font-size="11">200</text>
+            <text x="0" y="130" fill="#9ca3af" font-size="11">150</text>
+            <text x="0" y="174" fill="#9ca3af" font-size="11">50</text>
+            <text x="0" y="218" fill="#9ca3af" font-size="11">0</text>
+            <!-- Emprunts fill -->
+            <path d="M30,160 L130,88 L230,110 L330,66 L430,44 L530,55 L630,77 L700,88 L700,220 L30,220 Z" fill="rgba(59,130,246,0.08)"/>
+            <!-- Emprunts line -->
+            <path d="M30,160 L130,88 L230,110 L330,66 L430,44 L530,55 L630,77 L700,88" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Retours fill -->
+            <path d="M30,192 L130,154 L230,165 L330,143 L430,132 L530,143 L630,132 L700,143 L700,220 L30,220 Z" fill="rgba(34,197,94,0.08)"/>
+            <!-- Retours line -->
+            <path d="M30,192 L130,154 L230,165 L330,143 L430,132 L530,143 L630,132 L700,143" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- X labels -->
+            <text x="25" y="215" fill="#9ca3af" font-size="10">23 Avr</text>
+            <text x="120" y="215" fill="#9ca3af" font-size="10">30 Avr</text>
+            <text x="220" y="215" fill="#9ca3af" font-size="10">7 Mai</text>
+            <text x="318" y="215" fill="#9ca3af" font-size="10">14 Mai</text>
+            <text x="418" y="215" fill="#9ca3af" font-size="10">21 Mai</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Donut category -->
+      <div class="chart-card chart-donut">
+        <div class="chart-header">
+          <h3>Répartition par catégorie</h3>
+        </div>
+        <div class="donut-wrap">
+          <svg viewBox="0 0 160 160" class="donut-svg">
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#3b82f6" stroke-width="28" stroke-dasharray="150 227" stroke-dashoffset="0"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#22c55e" stroke-width="28" stroke-dasharray="75 302" stroke-dashoffset="-150"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#f59e0b" stroke-width="28" stroke-dasharray="56 321" stroke-dashoffset="-225"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#8b5cf6" stroke-width="28" stroke-dasharray="38 339" stroke-dashoffset="-281"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#ec4899" stroke-width="28" stroke-dasharray="34 343" stroke-dashoffset="-319"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#d1d5db" stroke-width="28" stroke-dasharray="24 353" stroke-dashoffset="-353"/>
+            <text x="80" y="76" text-anchor="middle" font-size="18" font-weight="700" fill="#111827">1 248</text>
+            <text x="80" y="92" text-anchor="middle" font-size="9" fill="#6b7280">Total</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="dl-row"><span class="dl-dot" style="background:#3b82f6"></span><span class="dl-name">Littérature</span><span class="dl-val">499 (40%)</span></div>
+            <div class="dl-row"><span class="dl-dot" style="background:#22c55e"></span><span class="dl-name">Science-fiction</span><span class="dl-val">250 (20%)</span></div>
+            <div class="dl-row"><span class="dl-dot" style="background:#f59e0b"></span><span class="dl-name">Histoire</span><span class="dl-val">187 (15%)</span></div>
+            <div class="dl-row"><span class="dl-dot" style="background:#8b5cf6"></span><span class="dl-name">Développement</span><span class="dl-val">125 (10%)</span></div>
+            <div class="dl-row"><span class="dl-dot" style="background:#ec4899"></span><span class="dl-name">Jeunesse</span><span class="dl-val">112 (9%)</span></div>
+            <div class="dl-row"><span class="dl-dot" style="background:#d1d5db"></span><span class="dl-name">Autres</span><span class="dl-val">75 (6%)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donut status -->
+      <div class="chart-card chart-status">
+        <div class="chart-header">
+          <h3>Livres par statut</h3>
+        </div>
+        <div class="donut-wrap donut-small">
+          <svg viewBox="0 0 160 160" class="donut-svg">
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#22c55e" stroke-width="28" stroke-dasharray="267 110" stroke-dashoffset="0"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#3b82f6" stroke-width="28" stroke-dasharray="56 321" stroke-dashoffset="-267"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#f59e0b" stroke-width="28" stroke-dasharray="45 332" stroke-dashoffset="-323"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#ef4444" stroke-width="28" stroke-dasharray="9 368" stroke-dashoffset="-368"/>
+            <text x="80" y="76" text-anchor="middle" font-size="18" font-weight="700" fill="#111827">1 248</text>
+            <text x="80" y="92" text-anchor="middle" font-size="9" fill="#6b7280">Total</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="dl-row"><span class="dl-dot" style="background:#22c55e"></span><span class="dl-name">Disponibles</span><span class="dl-val">891 (71%)</span></div>
+            <div class="dl-row"><span class="dl-dot" style="background:#3b82f6"></span><span class="dl-name">Empruntés</span><span class="dl-val">187 (15%)</span></div>
+            <div class="dl-row"><span class="dl-dot" style="background:#f59e0b"></span><span class="dl-name">Réservés</span><span class="dl-val">120 (10%)</span></div>
+            <div class="dl-row"><span class="dl-dot" style="background:#ef4444"></span><span class="dl-name">Indisponibles</span><span class="dl-val">50 (4%)</span></div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bottom-row">
+      <!-- Derniers livres -->
+      <div class="bottom-card books-added">
+        <div class="bottom-card-header">
+          <h3>Derniers livres ajoutés</h3>
+          <button class="voir-tout-btn" (click)="addBook()">Voir tout</button>
+        </div>
+        <div class="book-list">
+          <div class="book-row" *ngFor="let b of recentBooks">
+            <div class="book-thumb" [style]="getBookThumbStyle(b.titre)">{{ b.titre.substring(0,2).toUpperCase() }}</div>
+            <div class="book-row-info">
+              <strong>{{ b.titre }}</strong>
+              <span>{{ b.auteur }}</span>
+            </div>
+            <span class="book-category">{{ b.category }}</span>
+            <span class="book-date">{{ b.date }}</span>
+            <span class="status-pill available">Disponible</span>
+            <button class="more-dots">⋮</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activités récentes -->
+      <div class="bottom-card activities">
+        <div class="bottom-card-header">
+          <h3>Activités récentes</h3>
+          <button class="voir-tout-btn">Voir tout</button>
+        </div>
+        <div class="activity-list">
+          <div class="activity-row" *ngFor="let a of recentActivities">
+            <div class="activity-icon" [style.background]="a.iconBg">
+              <span [innerHTML]="a.icon"></span>
+            </div>
+            <div class="activity-info">
+              <strong>{{ a.title }}</strong>
+              <span>{{ a.detail }}</span>
+            </div>
+            <span class="activity-time">{{ a.time }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top 5 -->
+      <div class="bottom-card top5">
+        <div class="bottom-card-header">
+          <h3>Top 5 des livres les plus empruntés</h3>
+        </div>
+        <div class="top5-list">
+          <div class="top5-row" *ngFor="let b of top5Books; let i = index">
+            <span class="top5-rank">{{ i + 1 }}</span>
+            <div class="book-thumb small" [style]="getBookThumbStyle(b.titre)">{{ b.titre.substring(0,2).toUpperCase() }}</div>
+            <div class="top5-info">
+              <strong>{{ b.titre }}</strong>
+              <span>{{ b.auteur }}</span>
+            </div>
+            <span class="top5-count">{{ b.count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
-<!-- MODAL D'AJOUT / MODIFICATION DE LIVRE -->
-<div class="modal-backdrop" *ngIf="showBookModal">
-  <div class="modal-card">
-    <h2>{{ isEditMode ? 'Modifier le livre' : 'Ajouter un nouveau livre' }}</h2>
-    
-    <div class="form-group">
-      <label for="book-title">Titre *</label>
-      <input type="text" id="book-title" [(ngModel)]="currentBook.titre" placeholder="Ex: Les Misérables" />
+<!-- MODAL D'AJOUT / MODIFICATION -->
+<div class="modal-backdrop" *ngIf="showBookModal" (click)="closeModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ isEditMode ? 'Modifier le livre' : 'Ajouter un nouveau livre' }}</h2>
+      <button class="modal-close" (click)="closeModal()">✕</button>
     </div>
-
     <div class="form-group">
-      <label for="book-author">Auteur *</label>
-      <input type="text" id="book-author" [(ngModel)]="currentBook.auteur" placeholder="Ex: Victor Hugo" />
+      <label>Titre *</label>
+      <input type="text" [(ngModel)]="currentBook.titre" placeholder="Ex: Les Misérables" />
     </div>
-
     <div class="form-group">
-      <label for="book-isbn">ISBN *</label>
-      <input type="text" id="book-isbn" [(ngModel)]="currentBook.isbn" placeholder="Ex: 978-2070409228" />
+      <label>Auteur *</label>
+      <input type="text" [(ngModel)]="currentBook.auteur" placeholder="Ex: Victor Hugo" />
     </div>
-
     <div class="form-group">
-      <label for="book-qty">Quantité *</label>
-      <input type="number" id="book-qty" [(ngModel)]="currentBook.quantite" min="1" />
+      <label>ISBN *</label>
+      <input type="text" [(ngModel)]="currentBook.isbn" placeholder="Ex: 978-2070409228" />
     </div>
-
+    <div class="form-group">
+      <label>Quantité *</label>
+      <input type="number" [(ngModel)]="currentBook.quantite" min="1" />
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" (click)="closeModal()">Annuler</button>
       <button class="btn-save" (click)="saveBook()">Enregistrer</button>
