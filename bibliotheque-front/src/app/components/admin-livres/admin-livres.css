@@ -1,0 +1,51 @@
+﻿:host {
+  --accent: #d4af37;
+  --bg: #f8fafc;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #6b7280;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.admin-page { min-height:100vh; background:var(--bg); display:flex; flex-direction:column; }
+
+.header {
+  background:#fff; border-bottom:1px solid var(--border);
+  padding:20px 40px; display:flex; justify-content:space-between; align-items:center;
+}
+.header h1 { margin:0; font-size:24px; font-weight:600; color:var(--text); }
+
+.filters {
+  background:#fff; padding:20px 40px; border-bottom:1px solid var(--border);
+  display:flex; gap:20px; flex-wrap:wrap;
+}
+.filters input, .filters select {
+  padding:10px 14px; border:1px solid var(--border); border-radius:6px;
+  font-size:14px; background:#fff; outline:none; min-width:200px;
+}
+.filters input:focus, .filters select:focus { border-color:var(--accent); }
+
+.content { flex:1; padding:40px; overflow-y:auto; }
+.loading, .empty { text-align:center; padding:60px; color:var(--text-muted); font-size:16px; }
+
+.table-wrapper { overflow-x:auto; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); }
+.table { width:100%; border-collapse:collapse; }
+.table thead { background:var(--bg); border-bottom:2px solid var(--border); }
+.table th { padding:14px 16px; text-align:left; font-size:13px; font-weight:600; color:var(--text); text-transform:uppercase; letter-spacing:.5px; }
+.table td { padding:14px 16px; font-size:14px; color:var(--text); }
+.table tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; }
+.table tbody tr:hover { background:#f1f5f9; }
+
+.badge { display:inline-block; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; color:#fff; }
+.status-actif { background:#22c55e; }
+.status-perdu  { background:#ef4444; }
+
+.action-btn { border:none; cursor:pointer; padding:7px 14px; border-radius:6px; font-size:12px; font-weight:600; transition:background 0.2s; }
+.btn-primary { background:var(--accent); color:#0f172a; }
+.btn-primary:hover { background:#b8962e; }
+.btn-secondary { background:#3b82f6; color:#fff; }
+.btn-secondary:hover { background:#2563eb; }
+
+@keyframes spin { to { transform:rotate(360deg); } }
+.spinner { display:inline-block; width:24px; height:24px; border:3px solid rgba(0,0,0,0.1); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; }

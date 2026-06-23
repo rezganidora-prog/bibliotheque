@@ -1,77 +1,103 @@
 <div class="admin-layout">
 
-  <!-- BARRE LATÉRALE GAUCHE ADMIN -->
-  <aside class="sidebar">
-    <!-- LOGO -->
-    <div class="logo" (click)="navigateTo('/admin')">
-      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-      </svg>
-      <div class="logo-text">
-        <span class="logo-main">L'ARCHE</span>
-        <span class="logo-sub">ESPACE ADMIN</span>
+  <!-- SIDEBAR — identique au dashboard admin -->
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+
+    <div class="sidebar-header">
+      <div class="logo" (click)="navigateTo('/admin')">
+        <div class="logo-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+        </div>
+        <div class="logo-text" *ngIf="!sidebarCollapsed">
+          <span class="logo-main">L'ARCHE</span>
+          <span class="logo-sub">DES LIVRES</span>
+        </div>
       </div>
+      <button class="collapse-btn" (click)="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline *ngIf="!sidebarCollapsed" points="15 18 9 12 15 6"></polyline>
+          <polyline *ngIf="sidebarCollapsed"  points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
     </div>
 
-    <!-- MENU PRINCIPAL -->
-    <ul class="menu">
-      <li class="menu-item" (click)="navigateTo('/admin')">
-        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="9"></rect>
-          <rect x="14" y="3" width="7" height="5"></rect>
-          <rect x="14" y="12" width="7" height="9"></rect>
-          <rect x="3" y="16" width="7" height="5"></rect>
-        </svg>
-        <span>Tableau de bord</span>
-      </li>
-    </ul>
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <!-- Mon profil — seul item, toujours actif -->
+        <li class="nav-item active">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Mon profil</span>
+        </li>
+      </ul>
+    </nav>
 
-    <!-- MON COMPTE -->
-    <div class="account-menu">
-      <h4>MON COMPTE</h4>
-      <ul>
-        <li class="menu-item active">
-          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <!-- Footer utilisateur avec dropdown -->
+    <div class="sidebar-user" style="position:relative;">
+      <div class="user-avatar-wrap">
+        <div class="user-avatar-sidebar">{{ getInitial() }}</div>
+      </div>
+      <div class="user-info" *ngIf="!sidebarCollapsed">
+        <strong>{{ readerName }}</strong>
+        <span>Administrateur</span>
+      </div>
+      <button class="more-btn" *ngIf="!sidebarCollapsed" (click)="toggleUserMenu($event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle>
+        </svg>
+      </button>
+
+      <!-- Dropdown -->
+      <div class="user-dropdown" *ngIf="showUserMenu && !sidebarCollapsed">
+        <div class="dropdown-item active-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          Mon profil
-        </li>
-      </ul>
+          <span>Mon profil</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item dropdown-item-danger" (click)="logout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Se déconnecter</span>
+        </div>
+      </div>
     </div>
 
-    <!-- FOOTER SIDEBAR -->
-    <div class="sidebar-footer">
-      <p>© 2026 L'Arche des Livres</p>
-      <p>Administration</p>
-    </div>
   </aside>
 
   <!-- CONTENU PRINCIPAL -->
   <main class="content">
 
-    <!-- EN-TÊTE -->
-    <div class="top-header">
-      <div class="welcome-text">
-        <h1>Mon Profil Admin</h1>
-        <p>Gérez vos informations de compte administrateur</p>
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Mon Profil Administrateur</h1>
+        <p>Gérez vos informations de compte</p>
       </div>
-
-      <div class="header-right">
-        <div class="profile-mini">
-          <div class="avatar-mini">{{ getInitial() }}</div>
-          <div class="profile-meta">
+      <div class="topbar-right">
+        <div class="admin-chip">
+          <div class="chip-avatar">{{ getInitial() }}</div>
+          <div *ngIf="true">
             <strong>{{ readerName }}</strong>
-            <span class="role">Administrateur</span>
+            <span>Administrateur</span>
           </div>
         </div>
-
-        <button class="logout-btn" (click)="logout()">Déconnexion</button>
       </div>
     </div>
 
-    <!-- CARTE PROFIL PRINCIPALE (HERO) -->
+    <!-- CARTE HERO -->
     <div class="profile-hero">
       <div class="hero-bg"></div>
       <div class="hero-content">
@@ -94,96 +120,82 @@
           </button>
           <button class="btn-dashboard" (click)="navigateTo('/admin')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="9"></rect>
-              <rect x="14" y="3" width="7" height="5"></rect>
-              <rect x="14" y="12" width="7" height="9"></rect>
-              <rect x="3" y="16" width="7" height="5"></rect>
+              <rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect>
             </svg>
-            Retour au tableau de bord
+            Tableau de bord
           </button>
         </div>
       </div>
     </div>
 
-    <!-- DETAILED CONTAINER -->
-    <div class="tab-content">
-      <div class="info-grid-one-col">
-
-        <!-- Détails Utilisateur / Admin -->
-        <div class="info-card">
-          <div class="info-card-header" style="justify-content: space-between; display: flex; align-items: center; width: 100%;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: var(--color-accent);">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              <h3>Informations personnelles & professionnelles</h3>
-            </div>
-            <button *ngIf="!isEditing" class="btn-edit-inline" (click)="toggleEdit()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              Modifier
-            </button>
-          </div>
-          
-          <!-- Affichage Statique -->
-          <div class="detail-list" *ngIf="!isEditing">
-            <div class="detail-row">
-              <span class="detail-label">Nom complet</span>
-              <span class="detail-value">{{ readerName }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Email</span>
-              <span class="detail-value">{{ readerEmail }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">ID Administrateur</span>
-              <span class="detail-value">ADM20260012</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Date d'embauche</span>
-              <span class="detail-value">12 Janvier 2026</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Rôle du système</span>
-              <span class="detail-value">Super Administrateur</span>
-            </div>
-          </div>
-
-          <!-- Formulaire d'édition -->
-          <div class="settings-form" *ngIf="isEditing">
-            <div class="form-group">
-              <label>Nom complet</label>
-              <input type="text" [(ngModel)]="tempName" />
-            </div>
-            <div class="form-group">
-              <label>Email (Lecture seule)</label>
-              <input type="text" [value]="readerEmail" disabled />
-            </div>
-            <div class="form-group">
-              <label>Nouveau mot de passe</label>
-              <input type="password" [(ngModel)]="tempPassword" placeholder="Laisser vide pour ne pas changer" />
-            </div>
-            <div class="form-group">
-              <label>Confirmer le mot de passe</label>
-              <input type="password" [(ngModel)]="tempConfirmPassword" placeholder="Confirmer le nouveau mot de passe" />
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button class="btn-save-inline" (click)="saveProfile()">
-                Enregistrer
-              </button>
-              <button class="btn-cancel-inline" (click)="toggleEdit()">
-                Annuler
-              </button>
-            </div>
-          </div>
+    <!-- CARTE INFOS -->
+    <div class="info-card">
+      <div class="info-card-header">
+        <div class="header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
         </div>
+        <h3>Informations personnelles &amp; professionnelles</h3>
+        <button *ngIf="!isEditing" class="btn-edit-inline" (click)="toggleEdit()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Modifier
+        </button>
+      </div>
 
+      <!-- Vue statique -->
+      <div class="detail-list" *ngIf="!isEditing">
+        <div class="detail-row">
+          <span class="detail-label">Nom complet</span>
+          <span class="detail-value">{{ readerName }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Email</span>
+          <span class="detail-value">{{ readerEmail }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">ID Administrateur</span>
+          <span class="detail-value">ADM20260012</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Date d'embauche</span>
+          <span class="detail-value">12 Janvier 2026</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Rôle du système</span>
+          <span class="detail-value">Super Administrateur</span>
+        </div>
+      </div>
+
+      <!-- Formulaire d'édition -->
+      <div class="settings-form" *ngIf="isEditing">
+        <div class="form-group">
+          <label>Nom complet</label>
+          <input type="text" [(ngModel)]="tempName" />
+        </div>
+        <div class="form-group">
+          <label>Email (lecture seule)</label>
+          <input type="text" [value]="readerEmail" disabled />
+        </div>
+        <div class="form-group">
+          <label>Nouveau mot de passe</label>
+          <input type="password" [(ngModel)]="tempPassword" placeholder="Laisser vide pour ne pas changer" />
+        </div>
+        <div class="form-group">
+          <label>Confirmer le mot de passe</label>
+          <input type="password" [(ngModel)]="tempConfirmPassword" placeholder="Confirmer le nouveau mot de passe" />
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" (click)="saveProfile()">Enregistrer</button>
+          <button class="btn-cancel" (click)="toggleEdit()">Annuler</button>
+        </div>
       </div>
     </div>
 
   </main>
-
 </div>

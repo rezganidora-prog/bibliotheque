@@ -16,6 +16,11 @@ export class DashboardComponent implements OnInit {
   books: Book[] = [];
   isLoading = true;
   errorMessage = '';
+  sidebarCollapsed = false;
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
 
   // États pour la recherche et le tri
   searchTerm: string = '';

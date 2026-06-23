@@ -1,0 +1,327 @@
+import { Component, HostListener, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Auth } from '../../services/auth';
+import { ApiService } from '../../services/api.service';
+
+@Component({
+  selector: 'app-admin-reservations',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './admin-reservations.html',
+  styleUrl: './admin-reservations.css'
+})
+export class AdminReservationsComponent implements OnInit {
+
+  // Data
+  reservations: any[] = [];
+  isLoading = true;
+  searchTerm = '';
+  activeTab = 'Toutes';
+  selectedReservation: any = null;
+
+  // UI state
+  showRejectModal = false;
+  showFilterModal = false;
+  currentReservation: any = null;
+  rejectReason = '';
+  sidebarCollapsed = false;
+  showUserMenu = false;
+  readerName = localStorage.getItem('reader_name') || 'Admin';
+  sortBy = 'recent';
+
+  // Filter modal fields
+  filterStatus: string = '';
+  filterStartDate: string = '';
+  filterEndDate: string = '';
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 10;
+
+  tabs = ['Toutes', 'En attente', 'Prêtes', 'Récupérées', 'Annulées'];
+
+  statusLabels: Record<string, string> = {
+    EN_ATTENTE: 'En attente',
+    APPROUVE:   'Prête',
+    REFUSE:     'Annulée',
+    ANNULE:     'Annulée',
+    RECUPERE:   'Récupérée'
+  };
+
+  statusColors: Record<string, string> = {
+    EN_ATTENTE: '#f97316',
+    APPROUVE:   '#22c55e',
+    REFUSE:     '#ef4444',
+    ANNULE:     '#6b7280',
+    RECUPERE:   '#3b82f6'
+  };
+
+  constructor(
+    private auth: Auth,
+    private apiService: ApiService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    if (!this.auth.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.loadReservations();
+  }
+
+  loadReservations(): void {
+    this.isLoading = true;
+    this.apiService.getReservations(0, 200).subscribe({
+      next: (response) => {
+        this.reservations = response.content || response;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Erreur chargement reservations:', err);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  // ----- Statistics -----
+  get totalCount(): number { return this.reservations.length; }
+  get enAttenteCount(): number { return this.reservations.filter(r => r.status === 'EN_ATTENTE').length; }
+  get pretesCount(): number { return this.reservations.filter(r => r.status === 'APPROUVE').length; }
+  get recupereesCount(): number { return this.reservations.filter(r => r.status === 'RECUPERE').length; }
+  get annuleesCount(): number { return this.reservations.filter(r => r.status === 'REFUSE' || r.status === 'ANNULE').length; }
+
+  // ----- Filtering & sorting -----
+  get baseFiltered(): any[] {
+    let list = this.reservations;
+
+    // Tab filter
+    if (this.activeTab === 'En attente') list = list.filter(r => r.status === 'EN_ATTENTE');
+    else if (this.activeTab === 'Prêtes') list = list.filter(r => r.status === 'APPROUVE');
+    else if (this.activeTab === 'Récupérées') list = list.filter(r => r.status === 'RECUPERE');
+    else if (this.activeTab === 'Annulées') list = list.filter(r => r.status === 'REFUSE' || r.status === 'ANNULE');
+
+    // Filter modal
+    if (this.filterStatus) list = list.filter(r => r.status === this.filterStatus);
+    if (this.filterStartDate) {
+      const start = new Date(this.filterStartDate);
+      list = list.filter(r => new Date(r.reservationDate) >= start);
+    }
+    if (this.filterEndDate) {
+      const end = new Date(this.filterEndDate);
+      list = list.filter(r => new Date(r.reservationDate) <= end);
+    }
+
+    // Search
+    if (this.searchTerm.trim()) {
+      const s = this.searchTerm.toLowerCase();
+      list = list.filter(r =>
+        (r.user?.nom || '').toLowerCase().includes(s) ||
+        (r.book?.titre || '').toLowerCase().includes(s) ||
+        (r.user?.email || '').toLowerCase().includes(s)
+      );
+    }
+
+    // Sorting
+    if (this.sortBy === 'recent') list = [...list].sort((a, b) => new Date(b.reservationDate).getTime() - new Date(a.reservationDate).getTime());
+    else if (this.sortBy === 'ancien') list = [...list].sort((a, b) => new Date(a.reservationDate).getTime() - new Date(b.reservationDate).getTime());
+    else if (this.sortBy === 'titre') list = [...list].sort((a, b) => (a.book?.titre || '').localeCompare(b.book?.titre || ''));
+    else if (this.sortBy === 'user') list = [...list].sort((a, b) => (a.user?.nom || '').localeCompare(b.user?.nom || ''));
+
+    return list;
+  }
+
+  // ----- Pagination -----
+  get totalPages(): number { return Math.max(1, Math.ceil(this.baseFiltered.length / this.pageSize)); }
+
+  get pagedReservations(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.baseFiltered.slice(start, start + this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    const pages = [];
+    for (let i = 1; i <= Math.min(this.totalPages, 5); i++) pages.push(i);
+    return pages;
+  }
+
+  setTab(tab: string): void {
+    this.activeTab = tab;
+    this.currentPage = 1;
+    this.selectedReservation = null;
+  }
+
+  setPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages) this.currentPage = p;
+  }
+
+  selectReservation(res: any): void {
+    this.selectedReservation = this.selectedReservation?.id === res.id ? null : res;
+  }
+
+  closeDetail(): void { this.selectedReservation = null; }
+
+  // ----- UI helpers -----
+  getInitial(): string { return this.readerName.charAt(0).toUpperCase(); }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    if (this.sidebarCollapsed) this.showUserMenu = false;
+  }
+
+  toggleUserMenu(event: Event): void {
+    event.stopPropagation();
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  @HostListener('document:click')
+  closeUserMenu(): void { this.showUserMenu = false; }
+
+  navigateTo(route: string): void { this.router.navigate([route]); }
+  goToProfile(): void { this.router.navigate(['/admin/profile']); }
+
+  getStatusLabel(status: string): string { return this.statusLabels[status] || status; }
+  getStatusColor(status: string): string { return this.statusColors[status] || '#6b7280'; }
+
+  getStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      EN_ATTENTE: 'badge-pending',
+      APPROUVE:   'badge-prete',
+      RECUPERE:   'badge-recuperee',
+      REFUSE:     'badge-annulee',
+      ANNULE:     'badge-annulee'
+    };
+    return map[status] || 'badge-annulee';
+  }
+
+  getAvailabilityClass(res: any): string {
+    if (res.status === 'APPROUVE') return 'avail-prete';
+    if (res.status === 'RECUPERE') return 'avail-recuperee';
+    if (res.status === 'REFUSE' || res.status === 'ANNULE') return 'avail-annulee';
+    return '';
+  }
+
+  getAvailabilityText(res: any): string {
+    if (res.status === 'APPROUVE') return 'Disponible';
+    if (res.status === 'RECUPERE') return 'Récupérée';
+    if (res.status === 'REFUSE' || res.status === 'ANNULE') return 'Annulée';
+    return '-';
+  }
+
+  // ----- Overdue detection -----
+  isLate(res: any): boolean {
+    if (res.status !== 'EN_ATTENTE') return false;
+    if (!res.expiryDate) return false;
+    return new Date() > new Date(res.expiryDate);
+  }
+
+  // ----- Date formatters -----
+  formatDate(date: string): string {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  formatDateShort(date: string): string {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  formatDateTime(date: string): string {
+    if (!date) return '-';
+    const d = new Date(date);
+    return d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  getResId(res: any, idx: number): string {
+    return '#RES-' + String(res.id || (this.totalCount - idx)).padStart(3, '0');
+  }
+
+  getUserInitials(nom: string): string {
+    if (!nom) return '?';
+    const parts = nom.trim().split(' ');
+    return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : nom.substring(0, 2).toUpperCase();
+  }
+
+  getUserColor(nom: string): string {
+    const colors = ['#3b82f6','#8b5cf6','#ec4899','#f97316','#22c55e','#14b8a6','#ef4444','#f59e0b'];
+    let hash = 0;
+    for (let i = 0; i < (nom || '').length; i++) hash = nom.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  // ----- Reservation actions -----
+  approveReservation(id: number): void {
+    this.apiService.approveReservation(id).subscribe({
+      next: () => { this.loadReservations(); this.closeDetail(); },
+      error: (err) => console.error('Erreur approbation:', err)
+    });
+  }
+
+  markAsRecuperated(id: number): void {
+    this.apiService.rejectReservation(id, 'RECUPERE').subscribe({
+      next: () => { this.loadReservations(); this.closeDetail(); },
+      error: (err) => {
+        console.warn('Endpoint récupération non disponible:', err);
+        const res = this.reservations.find(r => r.id === id);
+        if (res) { res.status = 'RECUPERE'; this.closeDetail(); }
+      }
+    });
+  }
+
+  prolongReservation(id: number): void {
+    console.log('Prolongation de la réservation:', id);
+  }
+
+  printTicket(res: any): void {
+    const content = `
+       TICKET DE RÉSERVATION
+       =====================
+       Réservation : ${this.getResId(res, 0)}
+       Livre       : ${res.book?.titre || '-'}
+       Auteur      : ${res.book?.auteur || '-'}
+       Utilisateur : ${res.user?.nom || '-'}
+       Email       : ${res.user?.email || '-'}
+       Statut      : ${this.getStatusLabel(res.status)}
+       Date        : ${this.formatDateTime(res.reservationDate)}
+     `;
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write('<pre style="font-family:monospace;padding:20px;">' + content + '</pre>');
+      win.document.close();
+      win.print();
+    }
+  }
+
+  // ----- Reject modal -----
+  openRejectModal(reservation: any): void {
+    this.currentReservation = reservation;
+    this.rejectReason = '';
+    this.showRejectModal = true;
+  }
+
+  closeRejectModal(): void {
+    this.showRejectModal = false;
+    this.currentReservation = null;
+    this.rejectReason = '';
+  }
+
+  rejectReservation(): void {
+    if (!this.rejectReason.trim()) return;
+    this.apiService.rejectReservation(this.currentReservation.id, this.rejectReason).subscribe({
+      next: () => { this.loadReservations(); this.closeRejectModal(); this.closeDetail(); },
+      error: (err) => console.error('Erreur refus:', err)
+    });
+  }
+
+  // ----- Filter modal -----
+  openFilterModal(): void { this.showFilterModal = true; }
+  closeFilterModal(): void { this.showFilterModal = false; }
+  applyFilters(): void { this.currentPage = 1; this.showFilterModal = false; }
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/login']);
+  }
+}

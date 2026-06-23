@@ -39,7 +39,24 @@
   flex-direction: column;
   border-right: 1px solid rgba(212, 175, 55, 0.1);
   flex-shrink: 0;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
+
+.sidebar.collapsed {
+  width: 78px;
+  padding: 40px 12px;
+}
+
+.sidebar.collapsed .logo {
+  justify-content: center;
+}
+
+.sidebar.collapsed .menu-item {
+  justify-content: center;
+  padding: 12px 0;
+}
+
 
 /* Logo L'Arche des Livres */
 .logo {

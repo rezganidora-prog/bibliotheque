@@ -1,0 +1,57 @@
+<section class="admin-page">
+  <!-- Header -->
+  <header class="header">
+    <div class="logo-section" style="display:flex;align-items:center;gap:15px;">
+      <button class="back-btn" (click)="goBack()" style="background:none;border:none;cursor:pointer;font-size:18px;">?</button>
+      <h1>Gestion des Livres</h1>
+    </div>
+    <button class="action-btn btn-primary" (click)="openAddModal()">+ Ajouter un livre</button>
+  </header>
+
+  <!-- Filters -->
+  <div class="filters">
+    <input [(ngModel)]="searchTerm" placeholder="Chercher par titre, auteur ou ISBN..." />
+    <select [(ngModel)]="categoryFilter">
+      <option *ngFor="let cat of categories" [value]="cat">{{cat}}</option>
+    </select>
+  </div>
+
+  <!-- Content -->
+  <main class="content">
+    <div *ngIf="isLoading" class="loading">
+      <span class="spinner"></span> Chargement des livres...
+    </div>
+    <div *ngIf="!isLoading && filteredBooks.length === 0" class="empty">
+      Aucun livre trouve
+    </div>
+    <div *ngIf="!isLoading && filteredBooks.length > 0" class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Titre</th>
+            <th>Auteur</th>
+            <th>ISBN</th>
+            <th>Disponibilite</th>
+            <th style="text-align:center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let livre of filteredBooks">
+            <td>{{livre.titre}}</td>
+            <td>{{livre.auteur}}</td>
+            <td>{{livre.isbn}}</td>
+            <td>
+              <span class="badge" [ngClass]="{'status-actif': livre.disponible, 'status-perdu': !livre.disponible}">
+                {{livre.disponible ? 'Disponible' : 'Indisponible'}}
+              </span>
+            </td>
+            <td style="text-align:center;">
+              <button class="action-btn btn-secondary" (click)="openEditModal(livre)">Modifier</button>
+              <button class="action-btn btn-primary" (click)="deleteBook(livre.id, livre.titre)" style="margin-left:5px;">Supprimer</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</section>

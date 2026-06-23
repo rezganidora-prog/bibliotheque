@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../environments/environment';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -32,6 +32,18 @@ export class ApiService {
 
   getBooksPaginated(page: number, size: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/api/books/paginated?page=${page}&size=${size}`);
+  }
+
+  addBook(book: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/books`, book, { headers: this.getHeaders() });
+  }
+
+  updateBook(id: number, book: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/books/${id}`, book, { headers: this.getHeaders() });
+  }
+
+  deleteBook(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/books/${id}`, { headers: this.getHeaders() });
   }
 
   // RESERVATIONS

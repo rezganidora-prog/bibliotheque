@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -20,6 +20,9 @@ export class AdminProfileComponent implements OnInit {
   tempPassword = '';
   tempConfirmPassword = '';
   isEditing = false;
+
+  sidebarCollapsed = false;
+  showUserMenu = false;
 
   constructor(
     private auth: Auth,
@@ -47,6 +50,21 @@ export class AdminProfileComponent implements OnInit {
 
   getInitial(): string {
     return this.readerName.charAt(0).toUpperCase();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    if (this.sidebarCollapsed) this.showUserMenu = false;
+  }
+
+  toggleUserMenu(event: Event): void {
+    event.stopPropagation();
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  @HostListener('document:click')
+  closeUserMenu(): void {
+    this.showUserMenu = false;
   }
 
   navigateTo(route: string): void {
