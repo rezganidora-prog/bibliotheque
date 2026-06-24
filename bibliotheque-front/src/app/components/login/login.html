@@ -209,16 +209,6 @@
             </div>
           </div>
 
-          <!-- Se souvenir et Mot de passe oublié (Login uniquement) -->
-          <div *ngIf="isLoginMode" class="form-extras">
-            <label class="checkbox-container">
-              <input type="checkbox" name="remember" [(ngModel)]="rememberMe">
-              <span class="checkmark"></span>
-              Se souvenir de moi
-            </label>
-            <a href="javascript:void(0)" class="forgot-link">Mot de passe oublié ?</a>
-          </div>
-
           <!-- Bouton Soumettre principal -->
           <button type="submit" [disabled]="!authForm.form.valid || isLoading" class="btn-gate">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -219,7 +219,7 @@
       <div class="tabs-bar">
         <div class="tabs">
           <button *ngFor="let tab of tabs" class="tab-btn" [class.active]="activeTab === tab" (click)="setTab(tab)">
-            {{ tab === 'En attente' ? 'En attente' : tab === 'Pretes' ? 'Prêtes' : tab === 'Recuperees' ? 'Récupérées' : tab === 'Annulees' ? 'Annulées' : 'Toutes' }}
+            {{ tab }}
           </button>
         </div>
         <div class="sort-row">
@@ -283,8 +283,8 @@
               </td>
               <td>
                 <div class="book-cell">
-                  <div class="book-thumb">
-                    {{ (res.book?.titre || 'B').charAt(0) }}
+                  <div class="book-thumb" [style]="getBookThumbStyle(res.book?.titre || '')">
+                    {{ (res.book?.titre || 'B').substring(0, 2).toUpperCase() }}
                   </div>
                   <div>
                     <div class="book-title">{{ res.book?.titre }}</div>
@@ -377,8 +377,8 @@
       <div class="detail-body">
         <!-- Book info -->
         <div class="detail-book">
-          <div class="book-cover">
-            {{ (selectedReservation.book?.titre || 'B').charAt(0) }}
+          <div class="book-cover" [style]="getBookThumbStyle(selectedReservation.book?.titre || '')">
+            {{ (selectedReservation.book?.titre || 'B').substring(0, 2).toUpperCase() }}
           </div>
           <div>
             <h4>{{ selectedReservation.book?.titre }}</h4>

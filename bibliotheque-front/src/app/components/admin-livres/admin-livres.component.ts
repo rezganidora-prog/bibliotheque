@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,20 +16,37 @@ export class AdminLivresComponent implements OnInit {
 
   books: any[] = [];
   isLoading = true;
-  showModal = false;
+  searchTerm = '';
+  categoryFilter = 'Tous';
+
+  // Sidebar state
+  sidebarCollapsed = false;
+  showUserMenu = false;
+  readerName = localStorage.getItem('reader_name') || 'Admin';
+
+  // Modal CRUD state
+  showBookModal = false;
   isEditMode = false;
   currentBook: any = {
     titre: '',
     auteur: '',
     isbn: '',
     quantite: 1,
-    category: 'Général',
-    disponible: true
+    category: 'Roman',
+    langue: 'Français',
+    editeur: '',
+    anneePublication: 2026,
+    status: 'Disponible'
   };
-  searchTerm = '';
-  categoryFilter = 'Tous';
 
-  categories = ['Tous', 'Littérature', 'Science-fiction', 'Histoire', 'Développement', 'Jeunesse', 'Autres'];
+  // Pagination
+  currentPage = 1;
+  pageSize = 10;
+
+  categories = ['Tous', 'Roman', 'Science-fiction', 'Classique', 'Fantasy', 'Développement personnel', 'Autres'];
+  
+  formCategories = ['Roman', 'Science-fiction', 'Classique', 'Fantasy', 'Développement personnel', 'Autres'];
+  formStatuses = ['Disponible', 'Emprunté', 'Indisponible'];
 
   constructor(
     private auth: Auth,
@@ -59,15 +76,70 @@ export class AdminLivresComponent implements OnInit {
     });
   }
 
-  get filteredBooks(): any[] {
-    return this.books.filter(book => {
-      const matchCategory = this.categoryFilter === 'Tous' || book.category === this.categoryFilter;
-      const matchSearch = book.titre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                         book.auteur.toLowerCase().includes(this.searchTerm.toLowerCase());
-      return matchCategory && matchSearch;
-    });
+  // ----- Dynamic Statistics -----
+  get totalBooksQty(): number {
+    return this.books.reduce((acc, b) => acc + (b.quantite || 0), 0);
   }
 
+  get disponiblesQty(): number {
+    return this.books
+      .filter(b => b.status === 'Disponible')
+      .reduce((acc, b) => acc + (b.quantite || 0), 0);
+  }
+
+  get empruntesQty(): number {
+    return this.books
+      .filter(b => b.status === 'Emprunté')
+      .reduce((acc, b) => acc + (b.quantite || 0), 0);
+  }
+
+  get indisponiblesQty(): number {
+    return this.books
+      .filter(b => b.status === 'Indisponible' || (b.quantite || 0) === 0)
+      .reduce((acc, b) => acc + (b.quantite || 0), 0);
+  }
+
+  // ----- Filtering -----
+  get baseFilteredBooks(): any[] {
+    let list = this.books;
+
+    if (this.categoryFilter !== 'Tous') {
+      list = list.filter(b => (b.category || '').toLowerCase() === this.categoryFilter.toLowerCase());
+    }
+
+    if (this.searchTerm.trim()) {
+      const s = this.searchTerm.toLowerCase();
+      list = list.filter(b =>
+        (b.titre || '').toLowerCase().includes(s) ||
+        (b.auteur || '').toLowerCase().includes(s) ||
+        (b.isbn || '').toLowerCase().includes(s)
+      );
+    }
+
+    return list;
+  }
+
+  // ----- Pagination -----
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.baseFilteredBooks.length / this.pageSize));
+  }
+
+  get pagedBooks(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.baseFilteredBooks.slice(start, start + this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    const pages = [];
+    for (let i = 1; i <= this.totalPages; i++) pages.push(i);
+    return pages;
+  }
+
+  setPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages) this.currentPage = p;
+  }
+
+  // ----- CRUD Actions -----
   openAddModal(): void {
     this.isEditMode = false;
     this.currentBook = {
@@ -75,33 +147,37 @@ export class AdminLivresComponent implements OnInit {
       auteur: '',
       isbn: '',
       quantite: 1,
-      category: 'Général',
-      disponible: true
+      category: 'Roman',
+      langue: 'Français',
+      editeur: '',
+      anneePublication: 2026,
+      status: 'Disponible'
     };
-    this.showModal = true;
+    this.showBookModal = true;
   }
 
   openEditModal(book: any): void {
     this.isEditMode = true;
     this.currentBook = { ...book };
-    this.showModal = true;
+    this.showBookModal = true;
   }
 
   closeModal(): void {
-    this.showModal = false;
+    this.showBookModal = false;
   }
 
   saveBook(): void {
     if (!this.currentBook.titre || !this.currentBook.auteur || !this.currentBook.isbn) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      alert('Veuillez remplir tous les champs obligatoires (Titre, Auteur, ISBN).');
       return;
     }
 
+    // Set disponible boolean based on quantity/status
+    this.currentBook.disponible = (this.currentBook.quantite > 0 && this.currentBook.status !== 'Indisponible');
+
     if (this.isEditMode) {
-      // Mettre à jour
       this.apiService.updateBook(this.currentBook.id, this.currentBook).subscribe({
         next: () => {
-          alert('Livre mis à jour avec succès !');
           this.loadBooks();
           this.closeModal();
         },
@@ -111,10 +187,8 @@ export class AdminLivresComponent implements OnInit {
         }
       });
     } else {
-      // Ajouter
       this.apiService.addBook(this.currentBook).subscribe({
         next: () => {
-          alert('Livre ajouté avec succès !');
           this.loadBooks();
           this.closeModal();
         },
@@ -127,10 +201,9 @@ export class AdminLivresComponent implements OnInit {
   }
 
   deleteBook(id: number, titre: string): void {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer "${titre}" ?`)) {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer le livre "${titre}" ?`)) {
       this.apiService.deleteBook(id).subscribe({
         next: () => {
-          alert('Livre supprimé avec succès !');
           this.loadBooks();
         },
         error: (err) => {
@@ -141,8 +214,74 @@ export class AdminLivresComponent implements OnInit {
     }
   }
 
-  goBack(): void {
-    this.router.navigate(['/admin']);
+  // ----- UI helpers -----
+  getInitial(): string {
+    return this.readerName.charAt(0).toUpperCase();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    if (this.sidebarCollapsed) this.showUserMenu = false;
+  }
+
+  toggleUserMenu(event: Event): void {
+    event.stopPropagation();
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  @HostListener('document:click')
+  closeUserMenu(): void {
+    this.showUserMenu = false;
+  }
+
+  navigateTo(route: string): void {
+    this.router.navigate([route]);
+  }
+
+  goToProfile(): void {
+    this.router.navigate(['/admin/profile']);
+  }
+
+  getBookThumbStyle(title: string): string {
+    const map: Record<string, string> = {
+      '1984': '#6c1d1d',
+      'étranger': '#2b3a4a',
+      'petit prince': '#1e3c72',
+      'sapiens': '#14532d',
+      'misérables': '#653b1b',
+      'seigneur': '#1f2937',
+      'harry potter': '#5b21b6',
+      'alchimiste': '#db2777',
+      'rouge': '#991b1b'
+    };
+    const lower = title.toLowerCase();
+    for (const key in map) {
+      if (lower.includes(key)) {
+        return `background:${map[key]};color:#d4af37;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;border-radius:4px;width:32px;height:42px;box-shadow:0 1px 3px rgba(0,0,0,0.15);`;
+      }
+    }
+    return `background:#6b4c1b;color:#d4af37;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;border-radius:4px;width:32px;height:42px;box-shadow:0 1px 3px rgba(0,0,0,0.15);`;
+  }
+
+  getCategoryBadgeClass(category: string): string {
+    const map: Record<string, string> = {
+      'roman': 'badge-roman',
+      'science-fiction': 'badge-sf',
+      'classique': 'badge-classique',
+      'fantasy': 'badge-fantasy',
+      'développement personnel': 'badge-dev',
+      'histoire': 'badge-histoire'
+    };
+    return map[(category || '').toLowerCase()] || 'badge-autres';
+  }
+
+  getStatusBadgeClass(status: string): string {
+    const map: Record<string, string> = {
+      'disponible': 'badge-dispo',
+      'emprunté': 'badge-emprunte',
+      'indisponible': 'badge-indispo'
+    };
+    return map[(status || '').toLowerCase()] || 'badge-indispo';
   }
 
   logout(): void {

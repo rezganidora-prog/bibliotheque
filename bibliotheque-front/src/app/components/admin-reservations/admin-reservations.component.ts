@@ -244,6 +244,27 @@ export class AdminReservationsComponent implements OnInit {
     return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : nom.substring(0, 2).toUpperCase();
   }
 
+  getBookThumbStyle(title: string): string {
+    const map: Record<string, string> = {
+      '1984': '#6c1d1d',
+      'étranger': '#2b3a4a',
+      'petit prince': '#1e3c72',
+      'sapiens': '#14532d',
+      'misérables': '#653b1b',
+      'seigneur': '#1f2937',
+      'harry potter': '#5b21b6',
+      'alchimiste': '#db2777',
+      'rouge': '#991b1b'
+    };
+    const lower = title.toLowerCase();
+    for (const key in map) {
+      if (lower.includes(key)) {
+        return `background:${map[key]};color:#d4af37;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;border-radius:4px;width:32px;height:42px;box-shadow:0 1px 3px rgba(0,0,0,0.15);`;
+      }
+    }
+    return `background:#6b4c1b;color:#d4af37;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;border-radius:4px;width:32px;height:42px;box-shadow:0 1px 3px rgba(0,0,0,0.15);`;
+  }
+
   getUserColor(nom: string): string {
     const colors = ['#3b82f6','#8b5cf6','#ec4899','#f97316','#22c55e','#14b8a6','#ef4444','#f59e0b'];
     let hash = 0;
@@ -260,12 +281,10 @@ export class AdminReservationsComponent implements OnInit {
   }
 
   markAsRecuperated(id: number): void {
-    this.apiService.rejectReservation(id, 'RECUPERE').subscribe({
+    this.apiService.recuperateReservation(id).subscribe({
       next: () => { this.loadReservations(); this.closeDetail(); },
       error: (err) => {
-        console.warn('Endpoint récupération non disponible:', err);
-        const res = this.reservations.find(r => r.id === id);
-        if (res) { res.status = 'RECUPERE'; this.closeDetail(); }
+        console.error('Erreur récupération reservation:', err);
       }
     });
   }

@@ -59,6 +59,10 @@ export class ApiService {
     return this.http.put(`${this.apiUrl}/api/reservations/${id}/reject`, { reason }, { headers: this.getHeaders() });
   }
 
+  recuperateReservation(id: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/reservations/${id}/recuperate`, {}, { headers: this.getHeaders() });
+  }
+
   // EMPRUNTS
   getEmprunts(page: number, size: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/api/emprunts?page=${page}&size=${size}`, { headers: this.getHeaders() });
@@ -76,7 +80,24 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/api/emprunts/overdue`, { headers: this.getHeaders() });
   }
 
-  // STUDENTS
+  // USERS
+  getAllUsers(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/users`, { headers: this.getHeaders() });
+  }
+
+  createUser(user: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/users`, user, { headers: this.getHeaders() });
+  }
+
+  updateUser(id: number, user: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/users/${id}`, user, { headers: this.getHeaders() });
+  }
+
+  deleteUser(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/users/${id}`, { headers: this.getHeaders() });
+  }
+
+  // STUDENTS (fallback/compatibility)
   getAllStudents(): Observable<any> {
     return this.http.get(`${this.apiUrl}/api/students`, { headers: this.getHeaders() });
   }

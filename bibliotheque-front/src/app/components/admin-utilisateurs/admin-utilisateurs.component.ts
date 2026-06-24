@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,12 +14,29 @@ import { ApiService } from '../../services/api.service';
 })
 export class AdminUtilisateursComponent implements OnInit {
 
-  students: any[] = [];
+  users: any[] = [];
   isLoading = true;
   searchTerm = '';
-  roleFilter = 'Tous';
+  
+  // Sidebar state
+  sidebarCollapsed = false;
+  showUserMenu = false;
+  readerName = localStorage.getItem('reader_name') || 'Admin';
 
-  roles = ['Tous', 'STUDENT', 'ADMIN'];
+  // Modal CRUD state
+  showUserModal = false;
+  isEditMode = false;
+  currentUser: any = {
+    nom: '',
+    email: '',
+    password: '',
+    role: 'STUDENT',
+    active: true
+  };
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 10;
 
   constructor(
     private auth: Auth,
@@ -32,14 +49,14 @@ export class AdminUtilisateursComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.loadStudents();
+    this.loadUsers();
   }
 
-  loadStudents(): void {
+  loadUsers(): void {
     this.isLoading = true;
-    this.apiService.getAllStudents().subscribe({
-      next: (students) => {
-        this.students = students;
+    this.apiService.getAllUsers().subscribe({
+      next: (users) => {
+        this.users = users;
         this.isLoading = false;
       },
       error: (err) => {
@@ -49,21 +66,105 @@ export class AdminUtilisateursComponent implements OnInit {
     });
   }
 
-  get filteredStudents(): any[] {
-    return this.students.filter(student => {
-      const matchRole = this.roleFilter === 'Tous' || student.role === this.roleFilter;
-      const matchSearch = student.nom.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(this.searchTerm.toLowerCase());
-      return matchRole && matchSearch;
-    });
+  get baseFilteredUsers(): any[] {
+    let list = this.users;
+
+    if (this.searchTerm.trim()) {
+      const s = this.searchTerm.toLowerCase();
+      list = list.filter(u =>
+        (u.nom || '').toLowerCase().includes(s) ||
+        (u.email || '').toLowerCase().includes(s)
+      );
+    }
+    return list;
   }
 
-  deleteStudent(id: number, nom: string): void {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur "${nom}" ?`)) {
-      this.apiService.deleteStudent(id).subscribe({
+  // ----- Pagination -----
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.baseFilteredUsers.length / this.pageSize));
+  }
+
+  get pagedUsers(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.baseFilteredUsers.slice(start, start + this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    const pages = [];
+    for (let i = 1; i <= this.totalPages; i++) pages.push(i);
+    return pages;
+  }
+
+  setPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages) this.currentPage = p;
+  }
+
+  // ----- User Actions -----
+  openAddModal(): void {
+    this.isEditMode = false;
+    this.currentUser = {
+      nom: '',
+      email: '',
+      password: '',
+      role: 'STUDENT',
+      active: true
+    };
+    this.showUserModal = true;
+  }
+
+  openEditModal(user: any): void {
+    this.isEditMode = true;
+    this.currentUser = {
+      ...user,
+      password: '' // Don't expose password
+    };
+    this.showUserModal = true;
+  }
+
+  closeModal(): void {
+    this.showUserModal = false;
+  }
+
+  saveUser(): void {
+    if (!this.currentUser.nom || !this.currentUser.email) {
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+
+    if (this.isEditMode) {
+      // If password field is empty, don't update password
+      const payload = { ...this.currentUser };
+      if (!payload.password) delete payload.password;
+
+      this.apiService.updateUser(this.currentUser.id, payload).subscribe({
         next: () => {
-          alert('Utilisateur supprimé avec succès !');
-          this.loadStudents();
+          this.loadUsers();
+          this.closeModal();
+        },
+        error: (err) => {
+          console.error('Erreur mise à jour utilisateur:', err);
+          alert('Erreur lors de la mise à jour de l\'utilisateur.');
+        }
+      });
+    } else {
+      this.apiService.createUser(this.currentUser).subscribe({
+        next: () => {
+          this.loadUsers();
+          this.closeModal();
+        },
+        error: (err) => {
+          console.error('Erreur création utilisateur:', err);
+          alert('Erreur lors de la création de l\'utilisateur.');
+        }
+      });
+    }
+  }
+
+  deleteUser(id: number, nom: string): void {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur "${nom}" ?`)) {
+      this.apiService.deleteUser(id).subscribe({
+        next: () => {
+          this.loadUsers();
         },
         error: (err) => {
           console.error('Erreur suppression utilisateur:', err);
@@ -73,12 +174,77 @@ export class AdminUtilisateursComponent implements OnInit {
     }
   }
 
-  getRoleBadgeColor(role: string): string {
-    return role === 'ADMIN' ? '#d4af37' : '#3b82f6';
+  toggleUserStatus(user: any): void {
+    const nextStatus = !user.active;
+    this.apiService.updateUser(user.id, { active: nextStatus }).subscribe({
+      next: () => {
+        user.active = nextStatus;
+      },
+      error: (err) => {
+        console.error('Erreur mise à jour statut utilisateur:', err);
+      }
+    });
   }
 
-  goBack(): void {
-    this.router.navigate(['/admin']);
+  // ----- UI helpers -----
+  getRoleLabel(role: string): string {
+    const map: Record<string, string> = {
+      ADMIN: 'Administrateur',
+      LIBRARIAN: 'Bibliothécaire',
+      STUDENT: 'Membre'
+    };
+    return map[role] || role;
+  }
+
+  getRoleBadgeClass(role: string): string {
+    const map: Record<string, string> = {
+      ADMIN: 'badge-admin',
+      LIBRARIAN: 'badge-librarian',
+      STUDENT: 'badge-member'
+    };
+    return map[role] || 'badge-member';
+  }
+
+  getInitial(): string {
+    return this.readerName.charAt(0).toUpperCase();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    if (this.sidebarCollapsed) this.showUserMenu = false;
+  }
+
+  toggleUserMenu(event: Event): void {
+    event.stopPropagation();
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  @HostListener('document:click')
+  closeUserMenu(): void {
+    this.showUserMenu = false;
+  }
+
+  navigateTo(route: string): void {
+    this.router.navigate([route]);
+  }
+
+  goToProfile(): void {
+    this.router.navigate(['/admin/profile']);
+  }
+
+  getUserInitials(nom: string): string {
+    if (!nom) return '?';
+    const parts = nom.trim().split(' ');
+    return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : nom.substring(0, 2).toUpperCase();
+  }
+
+  getUserColor(nom: string): string {
+    const colors = ['#f59e0b','#3b82f6','#22c55e','#8b5cf6','#ec4899','#14b8a6','#ef4444','#0ea5e9'];
+    let hash = 0;
+    for (let i = 0; i < (nom || '').length; i++) {
+      hash = nom.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
   }
 
   logout(): void {
