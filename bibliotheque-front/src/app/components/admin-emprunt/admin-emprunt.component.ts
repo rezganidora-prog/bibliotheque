@@ -30,6 +30,15 @@ export class AdminEmpruntsComponent implements OnInit {
   showReturnModal = false;
   pendingReturnId: number | null = null;
 
+  // Modal nouvel emprunt
+  showNewModal = false;
+  creatingEmprunt = false;
+  books: any[] = [];
+  users: any[] = [];
+  newEmpUserId: number | null = null;
+  newEmpBookId: number | null = null;
+  newEmpReturnDate = '';
+
   // Toast notification
   toastMessage = '';
   toastType: 'success' | 'error' = 'success';
@@ -38,8 +47,7 @@ export class AdminEmpruntsComponent implements OnInit {
 
   statusLabels: Record<string, string> = {
     'ACTIF': 'Actif',
-    'RETOURNE': 'Retourné',
-    'PERDU': 'Perdu'
+    'RETOURNE': 'Retourné'
   };
 
   constructor(
@@ -77,8 +85,7 @@ export class AdminEmpruntsComponent implements OnInit {
   get totalCount(): number { return this.emprunts.length; }
   get actifsCount(): number { return this.emprunts.filter(e => e.statut === 'ACTIF').length; }
   get retournesCount(): number { return this.emprunts.filter(e => e.statut === 'RETOURNE').length; }
-  get perdusCount(): number { return this.emprunts.filter(e => e.statut === 'PERDU').length; }
-  get enRetardCount(): number { return this.emprunts.filter(e => e.estEnRetard === true && e.statut === 'ACTIF').length; }
+  get enRetardCount(): number { return this.emprunts.filter(e => this.isOverdue(e)).length; }
 
   get filteredEmprunts(): any[] {
     let list = this.emprunts;
@@ -87,10 +94,8 @@ export class AdminEmpruntsComponent implements OnInit {
       list = list.filter(e => e.statut === 'ACTIF');
     } else if (this.statusFilter === 'RETOURNE') {
       list = list.filter(e => e.statut === 'RETOURNE');
-    } else if (this.statusFilter === 'PERDU') {
-      list = list.filter(e => e.statut === 'PERDU');
     } else if (this.statusFilter === 'RETARD') {
-      list = list.filter(e => e.estEnRetard === true && e.statut === 'ACTIF');
+      list = list.filter(e => this.isOverdue(e));
     }
 
     if (this.searchTerm.trim()) {
@@ -160,8 +165,7 @@ export class AdminEmpruntsComponent implements OnInit {
   getStatusClass(status: string): string {
     const map: Record<string, string> = {
       'ACTIF': 'badge-pending',
-      'RETOURNE': 'badge-prete',
-      'PERDU': 'badge-annulee'
+      'RETOURNE': 'badge-prete'
     };
     return map[status] || 'badge-annulee';
   }
@@ -191,6 +195,64 @@ export class AdminEmpruntsComponent implements OnInit {
       error: (err) => {
         console.error('Erreur retour livre:', err);
         this.showToast('Erreur lors du retour du livre.', 'error');
+      }
+    });
+  }
+
+  // ── Nouvel emprunt ────────────────────────────────
+  get availableBooks(): any[] {
+    return this.books.filter(b => (b.quantite ?? 0) > 0);
+  }
+
+  get studentUsers(): any[] {
+    return this.users.filter(u => u.role === 'STUDENT' && u.active !== false);
+  }
+
+  openNewModal(): void {
+    this.newEmpUserId = null;
+    this.newEmpBookId = null;
+    const defaultReturn = new Date();
+    defaultReturn.setDate(defaultReturn.getDate() + 14);
+    this.newEmpReturnDate = defaultReturn.toISOString().split('T')[0];
+    this.showNewModal = true;
+
+    if (this.books.length === 0) {
+      this.apiService.getAllBooks().subscribe({
+        next: (books) => { this.books = books; this.cdr.detectChanges(); },
+        error: (err) => console.error('Erreur chargement livres:', err)
+      });
+    }
+    if (this.users.length === 0) {
+      this.apiService.getAllUsers().subscribe({
+        next: (users) => { this.users = users; this.cdr.detectChanges(); },
+        error: (err) => console.error('Erreur chargement utilisateurs:', err)
+      });
+    }
+  }
+
+  closeNewModal(): void { this.showNewModal = false; }
+
+  createEmprunt(): void {
+    if (!this.newEmpUserId || !this.newEmpBookId) {
+      this.showToast('Veuillez sélectionner un étudiant et un livre.', 'error');
+      return;
+    }
+    this.creatingEmprunt = true;
+    this.apiService.createEmprunt(
+      this.newEmpUserId,
+      this.newEmpBookId,
+      this.newEmpReturnDate || undefined
+    ).subscribe({
+      next: () => {
+        this.creatingEmprunt = false;
+        this.closeNewModal();
+        this.showToast('Emprunt créé avec succès.', 'success');
+        this.loadEmprunts();
+      },
+      error: (err) => {
+        this.creatingEmprunt = false;
+        console.error('Erreur création emprunt:', err);
+        this.showToast('Erreur lors de la création de l\'emprunt.', 'error');
       }
     });
   }

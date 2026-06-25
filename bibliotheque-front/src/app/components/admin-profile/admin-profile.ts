@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Auth } from '../../services/auth';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-admin-profile',
@@ -15,6 +16,7 @@ export class AdminProfileComponent implements OnInit {
 
   readerName = localStorage.getItem('reader_name') || 'Admin';
   readerEmail = this.getEmail();
+  userId = 0;
 
   tempName = '';
   tempPassword = '';
@@ -26,6 +28,7 @@ export class AdminProfileComponent implements OnInit {
 
   constructor(
     private auth: Auth,
+    private apiService: ApiService,
     private router: Router
   ) {
     this.tempName = this.readerName;
@@ -34,6 +37,19 @@ export class AdminProfileComponent implements OnInit {
   ngOnInit(): void {
     if (!this.auth.isLoggedIn()) {
       this.router.navigate(['/login']);
+      return;
+    }
+    this.getUserIdFromToken();
+  }
+
+  getUserIdFromToken(): void {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      this.userId = payload.userId || payload.id || 0;
+    } catch {
+      this.userId = 0;
     }
   }
 
@@ -95,9 +111,27 @@ export class AdminProfileComponent implements OnInit {
       alert('Les mots de passe ne correspondent pas.');
       return;
     }
-    localStorage.setItem('reader_name', this.tempName.trim());
-    this.readerName = this.tempName.trim();
-    this.isEditing = false;
-    alert('Profil administrateur mis à jour avec succès !');
+    if (!this.userId) {
+      alert('Impossible d\'identifier votre compte. Reconnectez-vous.');
+      return;
+    }
+
+    const payload: { nom: string; password?: string } = { nom: this.tempName.trim() };
+    if (this.tempPassword) {
+      payload.password = this.tempPassword;
+    }
+
+    this.apiService.updateUser(this.userId, payload).subscribe({
+      next: () => {
+        localStorage.setItem('reader_name', this.tempName.trim());
+        this.readerName = this.tempName.trim();
+        this.isEditing = false;
+        alert('Profil administrateur mis à jour avec succès !');
+      },
+      error: (err) => {
+        console.error('Erreur mise à jour profil admin:', err);
+        alert('Erreur lors de la mise à jour du profil.');
+      }
+    });
   }
 }

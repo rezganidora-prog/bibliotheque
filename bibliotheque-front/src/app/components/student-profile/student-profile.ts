@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Auth } from '../../services/auth';
-import { Api } from '../../services/api'; // Correction: Importe 'Api' depuis 'api'
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-student-profile',
@@ -27,10 +27,11 @@ export class StudentProfileComponent implements OnInit {
   tempConfirmPassword = '';
   isEditing = false;
   isLoading = true;
+  errorMessage = '';
 
   constructor(
     private auth: Auth,
-    private apiService: Api, // Correction: Utilise 'Api' comme type
+    private apiService: ApiService,
     private router: Router
   ) {
     this.tempName = this.readerName;
@@ -42,30 +43,33 @@ export class StudentProfileComponent implements OnInit {
       return;
     }
     this.getUserIdFromToken();
+    if (!this.userId) {
+      this.errorMessage = 'Impossible d\'identifier votre compte. Reconnectez-vous.';
+      this.isLoading = false;
+      return;
+    }
     this.loadBorrowHistory();
     this.loadFavoriteBooks();
   }
 
   getUserIdFromToken(): void {
     const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        // Note: le backend doit retourner l'userId dans le token
-        this.userId = payload.userId || 1;
-      } catch (e) {
-        this.userId = 1;
-      }
+    if (!token) return;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      this.userId = payload.userId || payload.id || 0;
+    } catch {
+      this.userId = 0;
     }
   }
 
   loadBorrowHistory(): void {
     this.isLoading = true;
     this.apiService.getUserEmprunts(this.userId).subscribe({
-      next: (emprunts: any) => { // Type explicite 'any'
-        this.borrowHistory = emprunts.map((e: any) => ({
-          titre: e.book.titre,
-          auteur: e.book.auteur,
+      next: (emprunts: any) => {
+        this.borrowHistory = (emprunts || []).map((e: any) => ({
+          titre: e.book?.titre,
+          auteur: e.book?.auteur,
           dateEmprunt: e.dateEmprunt,
           dateRetourPrevue: e.dateRetourPrevue,
           statut: e.statut,
@@ -73,9 +77,9 @@ export class StudentProfileComponent implements OnInit {
         }));
         this.isLoading = false;
       },
-      error: (err: any) => { // Type explicite 'any'
+      error: (err: any) => {
         console.error('Erreur chargement emprunts:', err);
-        this.borrowHistory = this.getMockBorrowHistory();
+        this.borrowHistory = [];
         this.isLoading = false;
       }
     });
@@ -83,14 +87,14 @@ export class StudentProfileComponent implements OnInit {
 
   loadFavoriteBooks(): void {
     this.apiService.getAllBooks().subscribe({
-      next: (books: any) => { // Type explicite 'any'
-        this.favoriteBooks = books.slice(0, 6).map((b: any) => ({
+      next: (books: any) => {
+        this.favoriteBooks = (books || []).slice(0, 6).map((b: any) => ({
           titre: b.titre,
           auteur: b.auteur
         }));
       },
       error: () => {
-        this.favoriteBooks = this.getMockFavoriteBooks();
+        this.favoriteBooks = [];
       }
     });
   }
@@ -183,31 +187,17 @@ export class StudentProfileComponent implements OnInit {
       return;
     }
 
-    this.apiService.updateProfile(this.userId, this.tempName.trim(), this.tempPassword).subscribe({
+    this.apiService.updateStudentProfile(this.userId, this.tempName.trim(), this.tempPassword || undefined).subscribe({
       next: () => {
         localStorage.setItem('reader_name', this.tempName.trim());
         this.readerName = this.tempName.trim();
         this.isEditing = false;
         alert('Profil mis à jour avec succes !');
       },
-      error: (err: any) => { // Type explicite 'any'
+      error: (err: any) => {
         console.error('Erreur mise à jour profil:', err);
         alert('Erreur lors de la mise à jour du profil.');
       }
     });
-  }
-
-  getMockBorrowHistory(): any[] {
-    return [
-      { titre: 'Le Petit Prince', auteur: 'Antoine de Saint-Exupéry', dateEmprunt: '12 Mai 2025', dateRetourPrevue: '26 Mai 2025', status: 'returned' },
-      { titre: '1984', auteur: 'George Orwell', dateEmprunt: '1 Juin 2025', dateRetourPrevue: '15 Juin 2025', status: 'active' }
-    ];
-  }
-
-  getMockFavoriteBooks(): any[] {
-    return [
-      { titre: "Harry Potter à l'école des sorciers", auteur: 'J.K. Rowling' },
-      { titre: 'Le Petit Prince', auteur: 'Antoine de Saint-Exupéry' }
-    ];
   }
 }

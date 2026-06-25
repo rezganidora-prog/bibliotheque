@@ -183,6 +183,17 @@
 }
 .search-box input::placeholder { color: var(--text-muted); }
 
+.new-emprunt-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 8px; padding: 9px 18px;
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(212,175,55,0.35);
+  transition: background .2s, box-shadow .2s;
+}
+.new-emprunt-btn:hover { background: var(--accent-hover); box-shadow: 0 4px 14px rgba(212,175,55,0.45); }
+.new-emprunt-btn:disabled { opacity: 0.6; cursor: default; }
+
 /* ── STATS ROW ────────────────────────────────────── */
 .stats-row {
   display: grid;
@@ -342,6 +353,11 @@
   display: flex; align-items: center; justify-content: center; gap: 12px;
   padding: 48px; color: var(--text-muted); font-size: 14px;
 }
+.empty-state {
+  flex-direction: column; text-align: center; gap: 8px;
+}
+.empty-state p { margin: 0; font-size: 15px; font-weight: 600; color: var(--text); }
+.empty-state small { max-width: 360px; font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner {
   display: inline-block; width: 22px; height: 22px;
@@ -364,6 +380,19 @@
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   text-align: center;
   animation: slideUp .2s ease;
+}
+.modal-form { text-align: left; width: 420px; }
+.modal-form .form-group { margin-bottom: 14px; }
+.modal-form label {
+  display: block; margin-bottom: 6px;
+  font-size: 12px; font-weight: 600; color: var(--text);
+}
+.modal-form select,
+.modal-form input[type="date"] {
+  width: 100%; box-sizing: border-box;
+  height: 38px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 13.5px; color: var(--text); background: #fff;
 }
 .modal-icon {
   width: 56px; height: 56px; border-radius: 50%;

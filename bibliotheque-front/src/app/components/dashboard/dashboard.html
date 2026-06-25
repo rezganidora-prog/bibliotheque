@@ -1,9 +1,180 @@
 <div class="student-layout">
 
-  <!-- BARRE LATÉRALE GAUCHE (SIDEBAR) -->
+  <!-- ═══════════════════════════════════════════════════
+       TOAST NOTIFICATION OVERLAY
+       ═══════════════════════════════════════════════════ -->
+  <div class="toast-overlay" *ngIf="toast.visible">
+    <div class="toast" [class.toast-success]="toast.type==='success'" [class.toast-error]="toast.type==='error'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline *ngIf="toast.type==='success'" points="20 6 9 17 4 12"></polyline>
+        <path *ngIf="toast.type==='error'" d="M18 6 6 18M6 6l12 12"></path>
+      </svg>
+      <span>{{ toast.message }}</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       RESERVATION DETAIL MODAL
+       ═══════════════════════════════════════════════════ -->
+  <div class="modal-backdrop" *ngIf="showReservationModal" (click)="closeReservationModal()">
+    <div class="res-modal" (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="res-modal-header">
+        <div class="res-modal-title">
+          <div class="res-modal-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          <div>
+            <h2>Formulaire de Réservation</h2>
+            <p>Complétez votre demande pour ce livre</p>
+          </div>
+        </div>
+        <button class="res-modal-close" (click)="closeReservationModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="res-modal-body" *ngIf="modalBook">
+
+        <!-- Book Preview -->
+        <div class="res-book-preview" [ngStyle]="getBookCoverStyle(modalBook.titre)">
+          <div class="res-book-cover-inner">
+            <div class="res-book-spine"></div>
+            <div class="res-book-content">
+              <div class="res-book-title">{{ modalBook.titre }}</div>
+              <div class="res-book-author">{{ modalBook.auteur }}</div>
+              <div class="res-book-isbn">ISBN: {{ modalBook.isbn }}</div>
+            </div>
+          </div>
+          <div class="res-avail-badge">
+            <span class="res-avail-dot"></span>
+            Disponible · {{ modalBook.quantite || 1 }} exemplaire(s)
+          </div>
+        </div>
+
+        <!-- Form fields -->
+        <div class="res-form">
+
+          <!-- Urgency selector -->
+          <div class="res-field">
+            <label class="res-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+              </svg>
+              Priorité de la demande
+            </label>
+            <div class="res-urgency-group">
+              <button class="res-urgency-btn"
+                      [class.active-urgent]="modalUrgency==='URGENT'"
+                      (click)="modalUrgency='URGENT'">
+                <span>⚡</span> Urgent
+              </button>
+              <button class="res-urgency-btn"
+                      [class.active-normal]="modalUrgency==='NORMAL'"
+                      (click)="modalUrgency='NORMAL'">
+                <span>📅</span> Normal
+              </button>
+              <button class="res-urgency-btn"
+                      [class.active-flexible]="modalUrgency==='FLEXIBLE'"
+                      (click)="modalUrgency='FLEXIBLE'">
+                <span>🕐</span> Flexible
+              </button>
+            </div>
+          </div>
+
+          <!-- Preferred pickup date -->
+          <div class="res-field">
+            <label class="res-label" for="res-date">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Date de retrait souhaitée
+              <span class="res-optional">(facultatif)</span>
+            </label>
+            <input id="res-date" type="date" class="res-input"
+                   [(ngModel)]="modalPreferredDate"
+                   [min]="todayStr"
+                   [max]="maxDateStr"
+                   placeholder="Choisir une date...">
+            <p class="res-hint">Vous pouvez retirer le livre dans les 30 prochains jours une fois approuvé.</p>
+          </div>
+
+          <!-- Notes -->
+          <div class="res-field">
+            <label class="res-label" for="res-notes">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Message à l'administrateur
+              <span class="res-optional">(facultatif)</span>
+            </label>
+            <textarea id="res-notes" class="res-textarea"
+                      [(ngModel)]="modalNotes"
+                      rows="3"
+                      placeholder="Ex : J'ai besoin de ce livre pour un cours la semaine prochaine. Merci !">
+            </textarea>
+            <div class="res-char-count" [class.res-char-warn]="modalNotes.length > 180">
+              {{ modalNotes.length }}/200
+            </div>
+          </div>
+
+          <!-- Info panel -->
+          <div class="res-info-panel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;margin-top:1px;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div>
+              <strong>Comment fonctionne la réservation ?</strong>
+              <ol>
+                <li>Votre demande est envoyée à l'administrateur</li>
+                <li>Vous recevrez une notification quand elle sera approuvée</li>
+                <li>Vous aurez alors 3 jours pour retirer le livre à la bibliothèque</li>
+              </ol>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="res-modal-footer">
+        <button class="res-btn-cancel" (click)="closeReservationModal()" [disabled]="isSubmittingReservation">
+          Annuler
+        </button>
+        <button class="res-btn-confirm"
+                (click)="confirmReservation()"
+                [disabled]="isSubmittingReservation || modalNotes.length > 200">
+          <svg *ngIf="!isSubmittingReservation" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <div *ngIf="isSubmittingReservation" class="res-spinner"></div>
+          {{ isSubmittingReservation ? 'Envoi en cours...' : 'Confirmer la réservation' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       SIDEBAR
+       ═══════════════════════════════════════════════════ -->
   <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
 
-    <!-- HEADER DE SIDEBAR AVEC LOGO ET BOUTON COLLAPSE -->
     <div class="sidebar-header" style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:30px;">
       <div class="logo" style="display:flex;align-items:center;gap:12px;margin:0;">
         <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px;color:#d4af37;flex-shrink:0;">
@@ -11,8 +182,8 @@
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
         </svg>
         <div class="logo-text" *ngIf="!sidebarCollapsed" style="display:flex;flex-direction:column;">
-          <span class="logo-main" style="font-weight:700;font-size:16px;letter-spacing:1.5px;color:#d4af37;">L'ARCHE</span>
-          <span class="logo-sub" style="font-size:9px;font-weight:400;letter-spacing:2.2px;opacity:0.8;color:#d4af37;">DES LIVRES</span>
+          <span style="font-weight:700;font-size:16px;letter-spacing:1.5px;color:#d4af37;">L'ARCHE</span>
+          <span style="font-size:9px;font-weight:400;letter-spacing:2.2px;opacity:0.8;color:#d4af37;">DES LIVRES</span>
         </div>
       </div>
       <button class="collapse-btn" (click)="toggleSidebar()" style="background:none;border:none;cursor:pointer;color:#a0aec0;padding:4px;display:flex;align-items:center;">
@@ -23,23 +194,22 @@
       </button>
     </div>
 
-    <!-- MENU DE NAVIGATION PRINCIPAL -->
     <ul class="menu">
-      <li class="menu-item" [class.active]="activeSection === 'home'" (click)="setActiveSection('home')">
+      <li class="menu-item" [class.active]="activeSection==='home'" (click)="setActiveSection('home')">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
           <polyline points="9 22 9 12 15 12 15 22"></polyline>
         </svg>
         <span class="menu-label" *ngIf="!sidebarCollapsed">Accueil</span>
       </li>
-      <li class="menu-item" [class.active]="activeSection === 'catalogue'" (click)="setActiveSection('catalogue')">
+      <li class="menu-item" [class.active]="activeSection==='catalogue'" (click)="setActiveSection('catalogue')">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
           <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
         </svg>
         <span class="menu-label" *ngIf="!sidebarCollapsed">Catalogue des livres</span>
       </li>
-      <li class="menu-item" [class.active]="activeSection === 'reservations'" (click)="setActiveSection('reservations')">
+      <li class="menu-item" [class.active]="activeSection==='reservations'" (click)="setActiveSection('reservations')">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -47,27 +217,26 @@
           <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
         <span class="menu-label" *ngIf="!sidebarCollapsed">Mes réservations</span>
-        <span class="badge-count" *ngIf="!sidebarCollapsed && readyReservationsCount > 0" style="background:#22c55e; color:#fff; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:auto; font-weight:700;">{{ readyReservationsCount }} prêtes</span>
+        <span class="badge-count" *ngIf="!sidebarCollapsed && readyReservationsCount > 0">{{ readyReservationsCount }} prêtes</span>
       </li>
-      <li class="menu-item" [class.active]="activeSection === 'emprunts'" (click)="setActiveSection('emprunts')">
+      <li class="menu-item" [class.active]="activeSection==='emprunts'" (click)="setActiveSection('emprunts')">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
           <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
         <span class="menu-label" *ngIf="!sidebarCollapsed">Mes emprunts</span>
-        <span class="badge-count" *ngIf="!sidebarCollapsed && (overdueLoansCount > 0)" style="background:#ef4444; color:#fff; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:auto; font-weight:700;">{{ overdueLoansCount }} retard</span>
+        <span class="badge-count" *ngIf="!sidebarCollapsed && overdueLoansCount > 0" style="background:#ef4444;">{{ overdueLoansCount }} retard</span>
       </li>
-      <li class="menu-item" [class.active]="activeSection === 'notifications'" (click)="setActiveSection('notifications')">
+      <li class="menu-item" [class.active]="activeSection==='notifications'" (click)="setActiveSection('notifications')">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
         </svg>
         <span class="menu-label" *ngIf="!sidebarCollapsed">Notifications</span>
-        <span class="badge-count" *ngIf="!sidebarCollapsed && unreadNotificationsCount > 0" style="background:#8b5cf6; color:#fff; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:auto; font-weight:700;">{{ unreadNotificationsCount }}</span>
+        <span class="badge-count" *ngIf="!sidebarCollapsed && unreadNotificationsCount > 0" style="background:#8b5cf6;">{{ unreadNotificationsCount }}</span>
       </li>
     </ul>
 
-    <!-- SECTION DE COMPTE -->
     <div class="account-menu" style="margin-top:20px;">
       <h4 *ngIf="!sidebarCollapsed">MON COMPTE</h4>
       <ul>
@@ -81,7 +250,6 @@
       </ul>
     </div>
 
-    <!-- CARTE D'AIDE ET SUPPORT -->
     <div class="help-box" *ngIf="!sidebarCollapsed">
       <div class="help-icon-wrapper">
         <svg class="help-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -93,80 +261,69 @@
       <button class="help-btn">Nous contacter</button>
     </div>
 
-    <!-- FOOTER DE SIDEBAR -->
     <div class="sidebar-footer" *ngIf="!sidebarCollapsed">
       <p>© 2026 L'Arche des Livres</p>
       <p>Tous droits réservés</p>
     </div>
-
   </aside>
 
-  <!-- CONTENU PRINCIPAL -->
+  <!-- ═══════════════════════════════════════════════════
+       MAIN CONTENT
+       ═══════════════════════════════════════════════════ -->
   <main class="content">
 
-    <!-- EN-TÊTE SUPÉRIEUR (TOP HEADER) -->
+    <!-- TOP HEADER -->
     <div class="top-header">
-
       <div class="welcome-text">
-        <h1>Bienvenue, {{ getReaderName() }} </h1>
+        <h1>Bienvenue, {{ getReaderName() }} 👋</h1>
         <p>Découvrez les trésors de notre collection de livres</p>
       </div>
-
       <div class="header-right">
-        
-        <!-- Icône Notification avec badge -->
+        <!-- Notification bell -->
         <div class="notification-badge" (click)="toggleNotifDropdown($event)" style="position:relative;cursor:pointer;">
           <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <span class="badge-dot" *ngIf="unreadNotificationsCount > 0" style="background:#ef4444;border:2px solid #fff;width:8px;height:8px;border-radius:50%;position:absolute;top:0;right:0;display:block;"></span>
-          
-          <!-- Dropdown menu -->
+          <span class="badge-dot" *ngIf="unreadNotificationsCount > 0"></span>
+          <!-- Dropdown -->
           <div class="notif-dropdown" *ngIf="showNotificationsDropdown" (click)="$event.stopPropagation()" style="position:absolute;top:40px;right:0;width:320px;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.15);border:1px solid #e5e7eb;z-index:100;max-height:400px;overflow-y:auto;padding:12px 0;">
-            <div class="nd-header" style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 8px;border-bottom:1px solid #f3f4f6;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 8px;border-bottom:1px solid #f3f4f6;">
               <span style="font-weight:700;font-size:14px;color:#1f2937;">Notifications ({{ unreadNotificationsCount }} non lues)</span>
               <a (click)="setActiveSection('notifications')" style="font-size:11px;color:#8b5cf6;cursor:pointer;font-weight:600;">Voir tout</a>
             </div>
-            <div class="nd-body" style="padding:4px 0;">
-              <div *ngIf="notifications.length === 0" style="padding:16px;text-align:center;font-size:12px;color:#9ca3af;">Aucune notification</div>
-              <div *ngFor="let notif of notifications.slice(0, 5)" [style.background]="notif.lu ? 'transparent' : '#f5f3ff'" style="padding:10px 16px;border-bottom:1px solid #f9fafb;display:flex;flex-direction:column;gap:4px;cursor:pointer;" (click)="markNotifAsRead(notif.id); setActiveSection('notifications');">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span style="font-weight:700;font-size:12px;color:#1f2937;">{{ notif.title }}</span>
-                  <span style="font-size:9px;color:#9ca3af;font-weight:600;">{{ notif.type }}</span>
-                </div>
-                <p style="margin:0;font-size:11px;color:#4b5563;line-height:1.4;">{{ notif.content }}</p>
-                <span style="font-size:9px;color:#9ca3af;margin-top:2px;">{{ formatDate(notif.dateCreation) }}</span>
-              </div>
+            <div *ngIf="notifications.length === 0" style="padding:16px;text-align:center;font-size:12px;color:#9ca3af;">Aucune notification</div>
+            <div *ngFor="let notif of notifications.slice(0,5)"
+                 [style.background]="notif.lu ? 'transparent' : '#f5f3ff'"
+                 style="padding:10px 16px;border-bottom:1px solid #f9fafb;cursor:pointer;"
+                 (click)="markNotifAsRead(notif.id); setActiveSection('notifications');">
+              <div style="font-weight:700;font-size:12px;color:#1f2937;">{{ notif.title }}</div>
+              <p style="margin:4px 0 0;font-size:11px;color:#4b5563;">{{ notif.content }}</p>
+              <span style="font-size:9px;color:#9ca3af;">{{ formatDate(notif.dateCreation) }}</span>
             </div>
           </div>
         </div>
-
-        <!-- Profil Mini -->
+        <!-- Profile mini -->
         <div class="profile-mini">
-          <div class="avatar">
-            {{ getReaderName().charAt(0).toUpperCase() }}
-          </div>
+          <div class="avatar">{{ getInitial() }}</div>
           <div class="profile-meta">
             <strong>{{ getReaderName() }}</strong>
-            <span class="role">étudiante</span>
+            <span class="role">étudiant(e)</span>
           </div>
           <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
         </div>
-
-        <button class="logout-btn" (click)="logout()">
-          Déconnexion
-        </button>
-
+        <button class="logout-btn" (click)="logout()">Déconnexion</button>
       </div>
-
     </div>
 
-    <!-- CARTES DE STATISTIQUES (STATS GRID) -->
-    <div class="stats-grid">
+    <!-- STATS CARDS -->
+    <div *ngIf="errorMessage" class="alert-banner danger" style="margin-bottom:16px;">
+      <span>{{ errorMessage }}</span>
+    </div>
 
+    <div class="stats-grid">
       <div class="stat-card" (click)="setActiveSection('catalogue')" style="cursor:pointer;">
         <div class="stat-icon-wrapper book-blue">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
@@ -185,8 +342,7 @@
         <div class="stat-icon-wrapper cal-orange">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
         </div>
@@ -214,8 +370,8 @@
       <div class="stat-card" (click)="setActiveSection('notifications')" style="cursor:pointer;">
         <div class="stat-icon-wrapper heart-yellow">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stat-svg">
-             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
         </div>
         <div class="stat-info">
@@ -224,118 +380,106 @@
           <a class="stat-link">Voir ma boîte aux lettres →</a>
         </div>
       </div>
-
     </div>
 
-    <!-- CORPS DU TABLEAU DE BORD -->
+    <!-- ═══ BODY ═══ -->
     <div class="dashboard-body" style="margin-top:24px;">
 
-      <!-- ==========================================
-           1. ACCUEIL (HOME)
-           ========================================== -->
-      <div class="home-section" *ngIf="activeSection === 'home'" style="display:flex; flex-direction:column; gap:24px; width:100%;">
-        
-        <!-- Bannières d'alerte / Expirations et Rappels -->
-        <div class="alerts-container" style="display:flex; flex-direction:column; gap:12px;">
-          
-          <!-- Retard -->
-          <div class="alert-banner danger" *ngIf="overdueLoansCount > 0" style="background:#fef2f2; border-left:4px solid #ef4444; padding:16px 20px; border-radius:8px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+      <!-- ── 1. ACCUEIL ────────────────────────────────────────────── -->
+      <div class="home-section" *ngIf="activeSection==='home'" style="display:flex;flex-direction:column;gap:24px;width:100%;">
+
+        <!-- Alerts -->
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="alert-banner danger" *ngIf="overdueLoansCount > 0">
             <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
               <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
             <div>
-              <strong style="color:#991b1b; font-size:14px; display:block;">Livre(s) en retard de retour !</strong>
-              <span style="color:#b91c1c; font-size:13px;">Vous avez {{ overdueLoansCount }} livre(s) dont la date de retour est dépassée. Veuillez les rapporter au plus vite.</span>
+              <strong style="color:#991b1b;font-size:14px;display:block;">Livre(s) en retard de retour !</strong>
+              <span style="color:#b91c1c;font-size:13px;">Vous avez {{ overdueLoansCount }} livre(s) dont la date de retour est dépassée.</span>
             </div>
-            <button (click)="setActiveSection('emprunts')" style="margin-left:auto; background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">Voir mes emprunts</button>
+            <button (click)="setActiveSection('emprunts')" style="margin-left:auto;background:#ef4444;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Voir mes emprunts</button>
           </div>
 
-          <!-- Échéance proche -->
-          <div class="alert-banner warning" *ngIf="expiringLoansCount > 0" style="background:#fffbeb; border-left:4px solid #f59e0b; padding:16px 20px; border-radius:8px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+          <div class="alert-banner warning" *ngIf="expiringLoansCount > 0">
             <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;">
               <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             <div>
-              <strong style="color:#92400e; font-size:14px; display:block;">Échéance de retour proche</strong>
-              <span style="color:#b45309; font-size:13px;">Vous avez {{ expiringLoansCount }} livre(s) à retourner dans les 3 prochains jours.</span>
+              <strong style="color:#92400e;font-size:14px;display:block;">Échéance de retour proche</strong>
+              <span style="color:#b45309;font-size:13px;">Vous avez {{ expiringLoansCount }} livre(s) à retourner dans les 3 prochains jours.</span>
             </div>
-            <button (click)="setActiveSection('emprunts')" style="margin-left:auto; background:#f59e0b; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">Voir mes emprunts</button>
+            <button (click)="setActiveSection('emprunts')" style="margin-left:auto;background:#f59e0b;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Voir mes emprunts</button>
           </div>
 
-          <!-- Réservations prêtes -->
-          <div class="alert-banner success" *ngIf="readyReservationsCount > 0" style="background:#f0fdf4; border-left:4px solid #22c55e; padding:16px 20px; border-radius:8px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+          <div class="alert-banner success" *ngIf="readyReservationsCount > 0">
             <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
             <div>
-              <strong style="color:#166534; font-size:14px; display:block;">Réservation prête pour retrait !</strong>
-              <span style="color:#15803d; font-size:13px;">Bonne nouvelle ! Vous avez {{ readyReservationsCount }} livre(s) prêt(s) à être récupéré(s).</span>
+              <strong style="color:#166534;font-size:14px;display:block;">Réservation prête pour retrait !</strong>
+              <span style="color:#15803d;font-size:13px;">Vous avez {{ readyReservationsCount }} livre(s) prêt(s) à être récupéré(s).</span>
             </div>
-            <button (click)="setActiveSection('reservations')" style="margin-left:auto; background:#22c55e; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">Voir mes réservations</button>
+            <button (click)="setActiveSection('reservations')" style="margin-left:auto;background:#22c55e;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Voir mes réservations</button>
           </div>
-
         </div>
 
-        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
           <!-- À la une -->
-          <div style="background:#fff; border-radius:16px; padding:24px; border:1px solid var(--color-border); display:flex; flex-direction:column; gap:16px;">
-            <h3 style="font-size:16px; font-weight:700; color:var(--color-text-dark); display:flex; align-items:center; gap:8px; margin:0;">
+          <div style="background:#fff;border-radius:16px;padding:24px;border:1px solid var(--color-border);">
+            <h3 style="font-size:16px;font-weight:700;color:var(--color-text-dark);display:flex;align-items:center;gap:8px;margin:0 0 16px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--color-accent);">
                 <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
                 <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
               </svg>
               À la une de L'Arche des Livres
             </h3>
-            <div style="background:linear-gradient(135deg, #0a1118 0%, #152232 100%); color:#fff; border-radius:12px; padding:20px; display:flex; gap:20px; align-items:center; position:relative; overflow:hidden; min-height:160px;">
-              <div style="position:absolute; right:-20px; bottom:-20px; opacity:0.1; transform:rotate(-15deg);">
+            <div style="background:linear-gradient(135deg,#0a1118 0%,#152232 100%);color:#fff;border-radius:12px;padding:20px;display:flex;gap:20px;align-items:center;position:relative;overflow:hidden;min-height:160px;">
+              <div style="position:absolute;right:-20px;bottom:-20px;opacity:0.1;transform:rotate(-15deg);">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:160px;height:160px;">
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                 </svg>
               </div>
-              <div style="flex:1; z-index:2;">
-                <span style="background:var(--color-accent); color:#0a1118; font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; text-transform:uppercase; letter-spacing:0.8px;">Indispensable</span>
-                <h4 style="font-size:18px; font-weight:700; margin:10px 0 6px; color:#fff;">Le Seigneur des Anneaux</h4>
-                <p style="font-size:12px; color:#a0aec0; margin-bottom:14px; line-height:1.4;">Découvrez l'aventure épique de Frodon et de la communauté de l'anneau, disponible à l'emprunt dans notre rayon fantastique.</p>
-                <button (click)="setActiveSection('catalogue')" style="background:#fff; color:#0a1118; border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:0.2s;">
-                  Réserver maintenant
-                  <span>→</span>
+              <div style="flex:1;z-index:2;">
+                <span style="background:var(--color-accent);color:#0a1118;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.8px;">Indispensable</span>
+                <h4 style="font-size:18px;font-weight:700;margin:10px 0 6px;color:#fff;">Le Seigneur des Anneaux</h4>
+                <p style="font-size:12px;color:#a0aec0;margin-bottom:14px;line-height:1.4;">Découvrez l'aventure épique de Frodon et de la communauté de l'anneau, disponible à l'emprunt dans notre rayon fantastique.</p>
+                <button (click)="setActiveSection('catalogue')" style="background:#fff;color:#0a1118;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+                  Réserver maintenant →
                 </button>
               </div>
             </div>
           </div>
 
           <!-- Messages récents -->
-          <div style="background:#fff; border-radius:16px; padding:24px; border:1px solid var(--color-border); display:flex; flex-direction:column; gap:16px;">
-            <h3 style="font-size:16px; font-weight:700; color:var(--color-text-dark); display:flex; align-items:center; gap:8px; margin:0;">
+          <div style="background:#fff;border-radius:16px;padding:24px;border:1px solid var(--color-border);display:flex;flex-direction:column;gap:16px;">
+            <h3 style="font-size:16px;font-weight:700;color:var(--color-text-dark);margin:0;display:flex;align-items:center;gap:8px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--color-accent);">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
               </svg>
               Boîte de réception
             </h3>
-            <div style="display:flex; flex-direction:column; gap:12px; max-height:180px; overflow-y:auto; padding-right:4px;">
-              <div *ngIf="notifications.length === 0" style="text-align:center; padding:24px; color:#9ca3af; font-size:12px;">Aucun message d'admin</div>
-              <div *ngFor="let notif of notifications.slice(0, 3)" style="padding:10px 12px; border-radius:8px; background:#f8fafc; border-left:3px solid #8b5cf6; display:flex; flex-direction:column; gap:4px;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span style="font-weight:700; font-size:12px; color:#1f2937;">{{ notif.title }}</span>
-                  <span style="font-size:9px; color:#9ca3af; font-weight:600;">{{ notif.type }}</span>
+            <div style="display:flex;flex-direction:column;gap:10px;max-height:200px;overflow-y:auto;padding-right:2px;">
+              <div *ngIf="notifications.length === 0" style="text-align:center;padding:24px;color:#9ca3af;font-size:12px;">Aucun message</div>
+              <div *ngFor="let notif of notifications.slice(0,3)"
+                   style="padding:10px 12px;border-radius:8px;background:#f8fafc;border-left:3px solid #8b5cf6;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-weight:700;font-size:12px;color:#1f2937;">{{ notif.title }}</span>
+                  <span *ngIf="!notif.lu" style="width:6px;height:6px;border-radius:50%;background:#8b5cf6;display:inline-block;"></span>
                 </div>
-                <p style="margin:0; font-size:11px; color:#4b5563; line-height:1.4; display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ notif.content }}</p>
+                <p style="margin:4px 0 0;font-size:11px;color:#4b5563;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ notif.content }}</p>
               </div>
             </div>
-            <button (click)="setActiveSection('notifications')" style="width:100%; padding:8px; border-radius:8px; background:#f1f5f9; color:#4b5563; font-weight:600; font-size:12px; border:none; cursor:pointer; text-align:center; margin-top:auto;">Voir tous mes messages</button>
+            <button (click)="setActiveSection('notifications')" style="width:100%;padding:8px;border-radius:8px;background:#f1f5f9;color:#4b5563;font-weight:600;font-size:12px;border:none;cursor:pointer;margin-top:auto;">Voir tous mes messages</button>
           </div>
         </div>
-
       </div>
 
-      <!-- ==========================================
-           2. CATALOGUE DES LIVRES
-           ========================================== -->
-      <div class="books-section" *ngIf="activeSection === 'catalogue'" style="width:100%;">
-
+      <!-- ── 2. CATALOGUE ──────────────────────────────────────────── -->
+      <div class="books-section" *ngIf="activeSection==='catalogue'" style="width:100%;">
         <div class="section-title-wrapper">
           <div class="section-title">
             <svg class="section-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -346,28 +490,16 @@
           </div>
         </div>
 
-        <!-- FILTRES ET RECHERCHE -->
+        <!-- Filtres -->
         <div class="filter-bar">
           <div class="search-input-wrapper">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input 
-              type="text" 
-              placeholder="Rechercher un livre, un auteur, un ISBN..." 
-              [(ngModel)]="searchTerm">
+            <input type="text" placeholder="Rechercher un livre, un auteur, un ISBN..." [(ngModel)]="searchTerm">
           </div>
-
           <div class="filter-selects">
-            <div class="select-wrapper">
-              <select [(ngModel)]="selectedCategory">
-                <option>Toutes catégories</option>
-                <option>Roman</option>
-                <option>Science-fiction</option>
-                <option>Histoire</option>
-              </select>
-            </div>
             <div class="select-wrapper">
               <select [(ngModel)]="selectedSort">
                 <option value="Trier par">Trier par</option>
@@ -378,38 +510,42 @@
           </div>
         </div>
 
-        <!-- GRILLE DE LIVRES DYNAMIQUE -->
+        <!-- Grille de livres -->
         <div *ngIf="filteredBooks.length > 0; else noBooks" class="books-grid">
-
           <div *ngFor="let book of filteredBooks" class="book-card">
-
-            <!-- Couverture du livre stylée avec gradient unique -->
             <div class="book-cover" [ngStyle]="getBookCoverStyle(book.titre)">
-              <div class="cover-heart">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="heart-svg">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                </svg>
-              </div>
+              <!-- Badge déjà réservé -->
+              <div *ngIf="isAlreadyReserved(book)" class="book-badge-reserved">Réservé</div>
+              <div *ngIf="isAlreadyBorrowed(book)" class="book-badge-borrowed">Emprunté</div>
               <div class="cover-title">{{ book.titre }}</div>
               <div class="cover-author">{{ book.auteur }}</div>
             </div>
-
-            <!-- Informations sur le livre -->
             <div class="book-info">
               <h3>{{ book.titre }}</h3>
               <p>{{ book.auteur }}</p>
-              
               <div class="status-wrapper">
                 <span class="status-dot-badge" [class.available]="book.disponible"></span>
                 <span class="status-text">{{ book.disponible ? 'Disponible' : 'Indisponible' }}</span>
               </div>
+              <!-- Bouton Réserver -->
+              <button class="btn-reserve"
+                      [class.btn-reserve-done]="isAlreadyReserved(book) || isAlreadyBorrowed(book)"
+                      [disabled]="!book.disponible || isAlreadyReserved(book) || isAlreadyBorrowed(book) || reservingBookId === (book['id'] ?? null)"
+                      (click)="reserveBook(book)">
+                <svg *ngIf="reservingBookId !== (book['id'] ?? null)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span *ngIf="reservingBookId !== (book['id'] ?? null)">
+                  {{ isAlreadyReserved(book) ? 'Déjà réservé' : (isAlreadyBorrowed(book) ? 'Emprunté' : (!book.disponible ? 'Indisponible' : 'Réserver')) }}
+                </span>
+                <span *ngIf="reservingBookId === (book['id'] ?? null)">Envoi...</span>
+              </button>
             </div>
-
           </div>
-
         </div>
 
-        <!-- Fallback si aucun livre ne correspond à la recherche -->
         <ng-template #noBooks>
           <div class="no-books-container">
             <svg class="no-books-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -419,86 +555,99 @@
             <p>Aucun livre ne correspond à votre recherche.</p>
           </div>
         </ng-template>
-
       </div>
 
-      <!-- ==========================================
-           3. MES RÉSERVATIONS
-           ========================================== -->
-      <div class="reservations-section" *ngIf="activeSection === 'reservations'" style="background:#fff; border-radius:16px; padding:24px; border:1px solid var(--color-border); width:100%;">
-        <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+      <!-- ── 3. MES RÉSERVATIONS ────────────────────────────────────── -->
+      <div class="reservations-section" *ngIf="activeSection==='reservations'"
+           style="background:#fff;border-radius:16px;padding:24px;border:1px solid var(--color-border);width:100%;">
+        <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
           <div>
-            <h2 style="font-size:18px; font-weight:700; color:var(--color-text-dark); margin:0 0 4px 0;">Mes Demandes de Réservations</h2>
-            <p style="font-size:12.5px; color:var(--color-text-muted); margin:0;">Suivez le statut de vos demandes de livres.</p>
+            <h2 style="font-size:18px;font-weight:700;color:var(--color-text-dark);margin:0 0 4px;">Mes Demandes de Réservations</h2>
+            <p style="font-size:12.5px;color:var(--color-text-muted);margin:0;">Suivez le statut de vos demandes de livres.</p>
           </div>
-          <button (click)="setActiveSection('catalogue')" style="background:var(--color-accent); color:#000; border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">Réserver un nouveau livre</button>
+          <button (click)="setActiveSection('catalogue')" style="background:var(--color-accent);color:#000;border:none;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+            + Réserver un nouveau livre
+          </button>
         </div>
 
-        <div *ngIf="userReservations.length === 0" style="text-align:center; padding:48px; color:var(--color-text-muted);">
+        <div *ngIf="userReservations.length === 0" style="text-align:center;padding:48px;color:var(--color-text-muted);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin-bottom:12px;color:#cbd5e1;">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          <p style="font-size:14px; margin:0;">Vous n'avez effectué aucune réservation pour le moment.</p>
+          <p style="font-size:14px;margin:0 0 16px;">Vous n'avez effectué aucune réservation pour le moment.</p>
+          <button (click)="setActiveSection('catalogue')" style="background:var(--color-accent);color:#000;border:none;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Parcourir le catalogue</button>
         </div>
 
         <div class="table-container" *ngIf="userReservations.length > 0" style="overflow-x:auto;">
-          <table style="width:100%; border-collapse:collapse; text-align:left;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;">
             <thead>
-              <tr style="border-bottom:2px solid var(--color-border); color:var(--color-text-muted); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">
+              <tr style="border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">
                 <th style="padding:12px 16px;">Livre</th>
                 <th style="padding:12px 16px;">Date Demande</th>
                 <th style="padding:12px 16px;">Statut</th>
                 <th style="padding:12px 16px;">Note Admin</th>
+                <th style="padding:12px 16px;">Action</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let res of userReservations" style="border-bottom:1px solid var(--color-border); font-size:13.5px; color:var(--color-text-dark);">
-                <td style="padding:14px 16px; display:flex; align-items:center; gap:12px;">
-                  <div style="background:#0a1118; color:#d4af37; border-radius:4px; padding:6px; font-weight:700; font-size:10px; width:28px; height:36px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                    {{ res.book?.titre ? res.book.titre.substring(0,2).toUpperCase() : 'LI' }}
-                  </div>
-                  <div>
-                    <div style="font-weight:600;">{{ res.book?.titre }}</div>
-                    <div style="font-size:11px; color:var(--color-text-muted);">{{ res.book?.auteur }}</div>
+              <tr *ngFor="let res of userReservations"
+                  style="border-bottom:1px solid var(--color-border);font-size:13.5px;color:var(--color-text-dark);">
+                <td style="padding:14px 16px;">
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="background:#0a1118;color:#d4af37;border-radius:4px;padding:6px;font-weight:700;font-size:10px;width:28px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      {{ res.book?.titre ? res.book.titre.substring(0,2).toUpperCase() : 'LI' }}
+                    </div>
+                    <div>
+                      <div style="font-weight:600;">{{ res.book?.titre }}</div>
+                      <div style="font-size:11px;color:var(--color-text-muted);">{{ res.book?.auteur }}</div>
+                    </div>
                   </div>
                 </td>
-                <td style="padding:14px 16px; color:#4b5563;">{{ formatDate(res.reservationDate) }}</td>
+                <td style="padding:14px 16px;color:#4b5563;">{{ formatDate(res.reservationDate) }}</td>
                 <td style="padding:14px 16px;">
-                  <span style="font-size:11px; font-weight:600; padding:4px 8px; border-radius:20px;"
-                    [style.background]="res.status === 'APPROUVE' ? '#dcfce7' : (res.status === 'EN_ATTENTE' ? '#fff7ed' : (res.status === 'RECUPERE' ? '#e0f2fe' : '#fee2e2'))"
-                    [style.color]="res.status === 'APPROUVE' ? '#15803d' : (res.status === 'EN_ATTENTE' ? '#c2410c' : (res.status === 'RECUPERE' ? '#0369a1' : '#991b1b'))">
-                    {{ res.status === 'APPROUVE' ? 'Prête' : (res.status === 'EN_ATTENTE' ? 'En attente' : (res.status === 'RECUPERE' ? 'Récupérée' : 'Annulée')) }}
+                  <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;"
+                        [style.background]="getReservationStatusStyle(res.status).bg"
+                        [style.color]="getReservationStatusStyle(res.status).color">
+                    {{ getReservationStatusLabel(res.status) }}
                   </span>
                 </td>
-                <td style="padding:14px 16px; color:#6b7280; font-style:italic;">{{ res.approvalNotes || '-' }}</td>
+                <td style="padding:14px 16px;color:#6b7280;font-style:italic;">{{ res.approvalNotes || '-' }}</td>
+                <td style="padding:14px 16px;">
+                  <button *ngIf="res.status === 'EN_ATTENTE'"
+                          (click)="cancelReservation(res)"
+                          [disabled]="cancellingResId === res.id"
+                          class="btn-cancel">
+                    {{ cancellingResId === res.id ? 'Annulation...' : 'Annuler' }}
+                  </button>
+                  <span *ngIf="res.status !== 'EN_ATTENTE'" style="font-size:11px;color:#9ca3af;">—</span>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- ==========================================
-           4. MES EMPRUNTS
-           ========================================== -->
-      <div class="emprunts-section" *ngIf="activeSection === 'emprunts'" style="background:#fff; border-radius:16px; padding:24px; border:1px solid var(--color-border); width:100%;">
+      <!-- ── 4. MES EMPRUNTS ────────────────────────────────────────── -->
+      <div class="emprunts-section" *ngIf="activeSection==='emprunts'"
+           style="background:#fff;border-radius:16px;padding:24px;border:1px solid var(--color-border);width:100%;">
         <div style="margin-bottom:20px;">
-          <h2 style="font-size:18px; font-weight:700; color:var(--color-text-dark); margin:0 0 4px 0;">Mes Emprunts de Livres</h2>
-          <p style="font-size:12.5px; color:var(--color-text-muted); margin:0;">Consultez vos emprunts en cours et votre historique.</p>
+          <h2 style="font-size:18px;font-weight:700;color:var(--color-text-dark);margin:0 0 4px;">Mes Emprunts de Livres</h2>
+          <p style="font-size:12.5px;color:var(--color-text-muted);margin:0;">Consultez vos emprunts en cours et votre historique.</p>
         </div>
 
-        <div *ngIf="userEmprunts.length === 0" style="text-align:center; padding:48px; color:var(--color-text-muted);">
+        <div *ngIf="userEmprunts.length === 0" style="text-align:center;padding:48px;color:var(--color-text-muted);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin-bottom:12px;color:#cbd5e1;">
             <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          <p style="font-size:14px; margin:0;">Vous n'avez aucun livre emprunté en ce moment.</p>
+          <p style="font-size:14px;margin:0;">Vous n'avez aucun livre emprunté en ce moment.</p>
         </div>
 
         <div class="table-container" *ngIf="userEmprunts.length > 0" style="overflow-x:auto;">
-          <table style="width:100%; border-collapse:collapse; text-align:left;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;">
             <thead>
-              <tr style="border-bottom:2px solid var(--color-border); color:var(--color-text-muted); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">
+              <tr style="border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">
                 <th style="padding:12px 16px;">Livre</th>
                 <th style="padding:12px 16px;">Date Emprunt</th>
                 <th style="padding:12px 16px;">Retour Prévu</th>
@@ -507,24 +656,31 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let emp of userEmprunts" style="border-bottom:1px solid var(--color-border); font-size:13.5px; color:var(--color-text-dark);">
-                <td style="padding:14px 16px; display:flex; align-items:center; gap:12px;">
-                  <div style="background:#0a1118; color:#d4af37; border-radius:4px; padding:6px; font-weight:700; font-size:10px; width:28px; height:36px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                    {{ emp.book?.titre ? emp.book.titre.substring(0,2).toUpperCase() : 'LI' }}
-                  </div>
-                  <div>
-                    <div style="font-weight:600;">{{ emp.book?.titre }}</div>
-                    <div style="font-size:11px; color:var(--color-text-muted);">{{ emp.book?.auteur }}</div>
+              <tr *ngFor="let emp of userEmprunts"
+                  style="border-bottom:1px solid var(--color-border);font-size:13.5px;color:var(--color-text-dark);"
+                  [style.background]="isOverdue(emp) ? '#fff5f5' : 'transparent'">
+                <td style="padding:14px 16px;">
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="background:#0a1118;color:#d4af37;border-radius:4px;padding:6px;font-weight:700;font-size:10px;width:28px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      {{ emp.book?.titre ? emp.book.titre.substring(0,2).toUpperCase() : 'LI' }}
+                    </div>
+                    <div>
+                      <div style="font-weight:600;">{{ emp.book?.titre }}</div>
+                      <div style="font-size:11px;color:var(--color-text-muted);">{{ emp.book?.auteur }}</div>
+                    </div>
                   </div>
                 </td>
-                <td style="padding:14px 16px; color:#4b5563;">{{ formatDate(emp.dateEmprunt) }}</td>
-                <td style="padding:14px 16px; color:#4b5563; font-weight:600;">{{ formatDate(emp.dateRetourPrevue) }}</td>
-                <td style="padding:14px 16px; color:#6b7280;">{{ emp.dateRetourEffective ? formatDate(emp.dateRetourEffective) : '-' }}</td>
+                <td style="padding:14px 16px;color:#4b5563;">{{ formatDate(emp.dateEmprunt) }}</td>
+                <td style="padding:14px 16px;font-weight:600;" [style.color]="isOverdue(emp) ? '#ef4444' : '#4b5563'">
+                  {{ formatDate(emp.dateRetourPrevue) }}
+                  <span *ngIf="isOverdue(emp)" style="display:block;font-size:10px;font-weight:700;color:#ef4444;margin-top:2px;">⚠ En retard</span>
+                </td>
+                <td style="padding:14px 16px;color:#6b7280;">{{ emp.dateRetourEffective ? formatDate(emp.dateRetourEffective) : '—' }}</td>
                 <td style="padding:14px 16px;">
-                  <span style="font-size:11px; font-weight:600; padding:4px 8px; border-radius:20px;"
-                    [style.background]="emp.statut === 'ACTIF' ? '#eff6ff' : '#f1f5f9'"
-                    [style.color]="emp.statut === 'ACTIF' ? '#1d4ed8' : '#475569'">
-                    {{ emp.statut === 'ACTIF' ? 'En cours' : 'Retourné' }}
+                  <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;"
+                        [style.background]="isOverdue(emp) ? '#fee2e2' : (emp.statut === 'ACTIF' ? '#eff6ff' : '#f1f5f9')"
+                        [style.color]="isOverdue(emp) ? '#991b1b' : (emp.statut === 'ACTIF' ? '#1d4ed8' : '#475569')">
+                    {{ isOverdue(emp) ? 'En retard' : (emp.statut === 'ACTIF' ? 'En cours' : 'Retourné') }}
                   </span>
                 </td>
               </tr>
@@ -533,72 +689,67 @@
         </div>
       </div>
 
-      <!-- ==========================================
-           5. CENTRE DE NOTIFICATIONS
-           ========================================== -->
-      <div class="notifications-section" *ngIf="activeSection === 'notifications'" style="background:#fff; border-radius:16px; padding:24px; border:1px solid var(--color-border); width:100%;">
-        <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+      <!-- ── 5. NOTIFICATIONS ──────────────────────────────────────── -->
+      <div class="notifications-section" *ngIf="activeSection==='notifications'"
+           style="background:#fff;border-radius:16px;padding:24px;border:1px solid var(--color-border);width:100%;">
+        <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <h2 style="font-size:18px; font-weight:700; color:var(--color-text-dark); margin:0 0 4px 0;">Mes Messages & Alertes</h2>
-            <p style="font-size:12.5px; color:var(--color-text-muted); margin:0;">Consultez les messages de l'administration et les rappels du système.</p>
+            <h2 style="font-size:18px;font-weight:700;color:var(--color-text-dark);margin:0 0 4px;">Mes Messages & Alertes</h2>
+            <p style="font-size:12.5px;color:var(--color-text-muted);margin:0;">Messages de l'administration et rappels du système.</p>
           </div>
-          <span style="font-size:12px; font-weight:600; background:#f3f4f6; color:#4b5563; padding:4px 10px; border-radius:20px;">
+          <span style="font-size:12px;font-weight:600;background:#f3f4f6;color:#4b5563;padding:4px 12px;border-radius:20px;">
             {{ unreadNotificationsCount }} non lu(s)
           </span>
         </div>
 
-        <div *ngIf="notifications.length === 0" style="text-align:center; padding:48px; color:var(--color-text-muted);">
+        <div *ngIf="notifications.length === 0" style="text-align:center;padding:48px;color:var(--color-text-muted);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin-bottom:12px;color:#cbd5e1;">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <p style="font-size:14px; margin:0;">Vous n'avez reçu aucun message pour le moment.</p>
+          <p style="font-size:14px;margin:0;">Vous n'avez reçu aucun message pour le moment.</p>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:16px;" *ngIf="notifications.length > 0">
-          <div *ngFor="let notif of notifications" 
-            [style.background]="notif.lu ? '#f8fafc' : '#f5f3ff'"
-            [style.border-left]="notif.lu ? '4px solid #cbd5e1' : '4px solid #8b5cf6'" 
-            style="padding:16px 20px; border-radius:10px; display:flex; gap:16px; align-items:flex-start; box-shadow:0 2px 4px rgba(0,0,0,0.01); transition:0.2s;">
-            
-            <div style="background:rgba(139, 92, 246, 0.1); border-radius:50%; padding:8px; color:#8b5cf6; flex-shrink:0;">
+        <div style="display:flex;flex-direction:column;gap:14px;" *ngIf="notifications.length > 0">
+          <div *ngFor="let notif of notifications"
+               [style.background]="notif.lu ? '#f8fafc' : '#f5f3ff'"
+               style="padding:16px 20px;border-radius:10px;display:flex;gap:16px;align-items:flex-start;transition:0.2s;"
+               [style.border-left]="notif.lu ? '4px solid #cbd5e1' : '4px solid #8b5cf6'">
+            <div style="background:rgba(139,92,246,0.1);border-radius:50%;padding:8px;color:#8b5cf6;flex-shrink:0;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
             </div>
-
             <div style="flex:1;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-wrap:wrap; gap:6px;">
-                <h4 style="font-size:14.5px; font-weight:700; color:#1f2937; margin:0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:6px;">
+                <h4 style="font-size:14.5px;font-weight:700;color:#1f2937;margin:0;">
                   {{ notif.title }}
-                  <span *ngIf="!notif.lu" style="font-size:9px; background:#8b5cf6; color:white; padding:2px 6px; border-radius:10px; margin-left:6px; vertical-align:middle; text-transform:uppercase; font-weight:700;">Nouveau</span>
+                  <span *ngIf="!notif.lu" style="font-size:9px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;font-weight:700;">NOUVEAU</span>
                 </h4>
-                <span style="font-size:10px; color:#9ca3af; text-transform:uppercase; font-weight:600; letter-spacing:0.5px;">{{ notif.type }}</span>
+                <span style="font-size:10px;color:#9ca3af;text-transform:uppercase;font-weight:600;">{{ notif.type }}</span>
               </div>
-              <p style="margin:0 0 8px; font-size:13px; color:#4b5563; line-height:1.5;">{{ notif.content }}</p>
-              <span style="font-size:10px; color:#9ca3af;">Reçu le {{ formatDate(notif.dateCreation) }}</span>
+              <p style="margin:0 0 8px;font-size:13px;color:#4b5563;line-height:1.5;">{{ notif.content }}</p>
+              <span style="font-size:10px;color:#9ca3af;">Reçu le {{ formatDate(notif.dateCreation) }}</span>
             </div>
-
-            <div style="display:flex; gap:8px; flex-shrink:0;">
-              <button *ngIf="!notif.lu" (click)="markNotifAsRead(notif.id, $event)" title="Marquer comme lu" style="border:none; background:#e0e7ff; color:#4338ca; border-radius:6px; padding:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+              <button *ngIf="!notif.lu" (click)="markNotifAsRead(notif.id, $event)" title="Marquer comme lu"
+                      style="border:none;background:#e0e7ff;color:#4338ca;border-radius:6px;padding:6px;cursor:pointer;display:flex;align-items:center;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </button>
-              <button (click)="deleteNotif(notif.id, $event)" title="Supprimer" style="border:none; background:#fee2e2; color:#b91c1c; border-radius:6px; padding:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+              <button (click)="deleteNotif(notif.id, $event)" title="Supprimer"
+                      style="border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:6px;cursor:pointer;display:flex;align-items:center;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;">
                   <polyline points="3 6 5 6 21 6"></polyline>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
               </button>
             </div>
-
           </div>
         </div>
       </div>
 
     </div>
-
   </main>
-
 </div>

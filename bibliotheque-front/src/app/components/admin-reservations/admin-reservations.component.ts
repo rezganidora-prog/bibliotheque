@@ -25,6 +25,9 @@ export class AdminReservationsComponent implements OnInit {
   showRejectModal = false;
   showFilterModal = false;
   showNotifModal = false;
+  showNewModal = false;
+  openActionMenuId: number | null = null;
+  creatingReservation = false;
   currentReservation: any = null;
   rejectReason = '';
   notifTitle = '';
@@ -40,6 +43,14 @@ export class AdminReservationsComponent implements OnInit {
   filterStartDate: string = '';
   filterEndDate: string = '';
 
+  // New reservation modal fields
+  books: any[] = [];
+  users: any[] = [];
+  newResUserId: number | null = null;
+  newResBookId: number | null = null;
+  newResNotes = '';
+  newResPreferredDate = '';
+
   // Pagination
   currentPage = 1;
   pageSize = 10;
@@ -49,7 +60,7 @@ export class AdminReservationsComponent implements OnInit {
   statusLabels: Record<string, string> = {
     EN_ATTENTE: 'En attente',
     APPROUVE:   'Prête',
-    REFUSE:     'Annulée',
+    REFUSE:     'Refusée',
     ANNULE:     'Annulée',
     RECUPERE:   'Récupérée'
   };
@@ -184,7 +195,17 @@ export class AdminReservationsComponent implements OnInit {
   }
 
   @HostListener('document:click')
-  closeUserMenu(): void { this.showUserMenu = false; }
+  closeMenus(): void {
+    this.showUserMenu = false;
+    this.openActionMenuId = null;
+  }
+
+  toggleActionMenu(event: Event, res: any): void {
+    event.stopPropagation();
+    this.openActionMenuId = this.openActionMenuId === res.id ? null : res.id;
+  }
+
+  closeActionMenu(): void { this.openActionMenuId = null; }
 
   navigateTo(route: string): void { this.router.navigate([route]); }
   goToProfile(): void { this.router.navigate(['/admin/profile']); }
@@ -387,6 +408,54 @@ export class AdminReservationsComponent implements OnInit {
   openFilterModal(): void { this.showFilterModal = true; }
   closeFilterModal(): void { this.showFilterModal = false; }
   applyFilters(): void { this.currentPage = 1; this.showFilterModal = false; }
+
+  // ----- New reservation modal -----
+  openNewModal(): void {
+    this.newResUserId = null;
+    this.newResBookId = null;
+    this.newResNotes = '';
+    this.newResPreferredDate = '';
+    this.showNewModal = true;
+    if (this.books.length === 0) {
+      this.apiService.getAllBooks().subscribe({
+        next: (books) => { this.books = books; this.cdr.detectChanges(); },
+        error: (err) => console.error('Erreur chargement livres:', err)
+      });
+    }
+    if (this.users.length === 0) {
+      this.apiService.getAllUsers().subscribe({
+        next: (users) => { this.users = users; this.cdr.detectChanges(); },
+        error: (err) => console.error('Erreur chargement utilisateurs:', err)
+      });
+    }
+  }
+
+  closeNewModal(): void { this.showNewModal = false; }
+
+  createNewReservation(): void {
+    if (!this.newResUserId || !this.newResBookId) {
+      alert('Veuillez sélectionner un utilisateur et un livre.');
+      return;
+    }
+    this.creatingReservation = true;
+    this.apiService.createReservation(
+      this.newResUserId,
+      this.newResBookId,
+      this.newResNotes || undefined,
+      this.newResPreferredDate || undefined
+    ).subscribe({
+      next: () => {
+        this.creatingReservation = false;
+        this.closeNewModal();
+        this.loadReservations();
+      },
+      error: (err) => {
+        this.creatingReservation = false;
+        console.error('Erreur création réservation:', err);
+        alert('Erreur lors de la création de la réservation.');
+      }
+    });
+  }
 
   logout(): void {
     this.auth.logout();

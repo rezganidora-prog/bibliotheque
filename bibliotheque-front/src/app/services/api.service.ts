@@ -30,10 +30,6 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/api/books`);
   }
 
-  getBooksPaginated(page: number, size: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/books/paginated?page=${page}&size=${size}`);
-  }
-
   addBook(book: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/api/books`, book, { headers: this.getHeaders() });
   }
@@ -63,6 +59,17 @@ export class ApiService {
     return this.http.put(`${this.apiUrl}/api/reservations/${id}/recuperate`, {}, { headers: this.getHeaders() });
   }
 
+  createReservation(userId: number, bookId: number, notes?: string, preferredDate?: string): Observable<any> {
+    let url = `${this.apiUrl}/api/reservations?userId=${userId}&bookId=${bookId}`;
+    if (notes) url += `&notes=${encodeURIComponent(notes)}`;
+    if (preferredDate) url += `&preferredDate=${encodeURIComponent(preferredDate)}`;
+    return this.http.post(url, {}, { headers: this.getHeaders() });
+  }
+
+  cancelReservation(reservationId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/reservations/${reservationId}`, { headers: this.getHeaders() });
+  }
+
   // EMPRUNTS
   getEmprunts(page: number, size: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/api/emprunts?page=${page}&size=${size}`, { headers: this.getHeaders() });
@@ -78,6 +85,15 @@ export class ApiService {
 
   getOverdueEmprunts(): Observable<any> {
     return this.http.get(`${this.apiUrl}/api/emprunts/overdue`, { headers: this.getHeaders() });
+  }
+
+  createEmprunt(userId: number, bookId: number, dateRetourPrevue?: string): Observable<any> {
+    const body: { book: { id: number }; user: { id: number }; dateRetourPrevue?: string } = {
+      book: { id: bookId },
+      user: { id: userId }
+    };
+    if (dateRetourPrevue) body.dateRetourPrevue = dateRetourPrevue;
+    return this.http.post(`${this.apiUrl}/api/emprunts`, body, { headers: this.getHeaders() });
   }
 
   // USERS
@@ -97,21 +113,15 @@ export class ApiService {
     return this.http.delete(`${this.apiUrl}/api/users/${id}`, { headers: this.getHeaders() });
   }
 
-  // STUDENTS (fallback/compatibility)
+  // STUDENTS
   getAllStudents(): Observable<any> {
     return this.http.get(`${this.apiUrl}/api/students`, { headers: this.getHeaders() });
   }
 
-  deleteStudent(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/api/students/${id}`, { headers: this.getHeaders() });
-  }
-
-  // AUTH
-  updateProfile(nom: string, password: string, confirmPassword: string): Observable<any> {
-    return this.http.put(`${this.apiUrl}/auth/update-profile`, 
-      { nom, password, confirmPassword }, 
-      { headers: this.getHeaders() }
-    );
+  updateStudentProfile(userId: number, nom: string, password?: string): Observable<any> {
+    const body: { nom: string; password?: string } = { nom };
+    if (password) body.password = password;
+    return this.http.put(`${this.apiUrl}/api/students/${userId}`, body, { headers: this.getHeaders() });
   }
 
   // NOTIFICATIONS

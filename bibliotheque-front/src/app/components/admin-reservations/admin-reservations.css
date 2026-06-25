@@ -236,7 +236,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* tabs bar */
@@ -349,6 +349,21 @@
   transition: border-color .15s, color .15s, background .15s;
 }
 .icon-btn:hover { border-color: var(--accent); color: var(--accent); background: #fefce8; }
+.icon-btn.active { border-color: var(--accent); color: var(--accent); background: #fefce8; }
+
+.action-menu-wrap { position: relative; }
+.action-dropdown {
+  position: absolute; top: calc(100% + 4px); right: 0;
+  min-width: 180px; background: #fff;
+  border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: var(--shadow-md); z-index: 50;
+  overflow: hidden;
+}
+.action-dropdown-item {
+  padding: 10px 14px; font-size: 13px; color: var(--text);
+  cursor: pointer; transition: background .15s; white-space: nowrap;
+}
+.action-dropdown-item:hover { background: #f8fafc; color: var(--accent); }
 
 /* ── PAGINATION ─────────────────────────────────── */
 .pagination {

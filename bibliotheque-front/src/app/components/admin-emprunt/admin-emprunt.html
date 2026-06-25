@@ -128,6 +128,12 @@
           </svg>
           <input [(ngModel)]="searchTerm" placeholder="Chercher un livre, un utilisateur..." />
         </div>
+        <button class="new-emprunt-btn" (click)="openNewModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+            <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Nouvel emprunt
+        </button>
       </div>
     </div>
 
@@ -185,19 +191,6 @@
           <span class="stat-sub" style="color:#b91c1c;">Délai dépassé</span>
         </div>
       </div>
-      <div class="stat-card" (click)="setTab('PERDU')" [class.active-stat]="statusFilter === 'PERDU'">
-        <div class="stat-icon" style="background:#fef2f2;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="width:20px;height:20px;">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-          </svg>
-        </div>
-        <div class="stat-info">
-          <span class="stat-label">Perdus</span>
-          <span class="stat-value">{{ perdusCount }}</span>
-          <span class="stat-sub">Déclarés perdus</span>
-        </div>
-      </div>
     </div>
 
     <!-- Table Card -->
@@ -209,7 +202,6 @@
           <button class="tab-btn" [class.active]="statusFilter === 'ACTIF'" (click)="setTab('ACTIF')">Actifs</button>
           <button class="tab-btn" [class.active]="statusFilter === 'RETOURNE'" (click)="setTab('RETOURNE')">Retournés</button>
           <button class="tab-btn" [class.active]="statusFilter === 'RETARD'" (click)="setTab('RETARD')">En retard</button>
-          <button class="tab-btn" [class.active]="statusFilter === 'PERDU'" (click)="setTab('PERDU')">Perdus</button>
         </div>
         <div class="sort-row">
           <span>Trier par :</span>
@@ -228,8 +220,14 @@
       </div>
 
       <!-- Empty -->
-      <div *ngIf="!isLoading && filteredEmprunts.length === 0" class="state-msg">
-        Aucun emprunt trouvé
+      <div *ngIf="!isLoading && filteredEmprunts.length === 0" class="state-msg empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:#cbd5e1;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <p>Aucun emprunt trouvé</p>
+        <small>Créez un emprunt avec le bouton « Nouvel emprunt » ou redémarrez le serveur backend pour charger les données de démonstration.</small>
+        <button class="new-emprunt-btn" style="margin-top:12px;" (click)="openNewModal()">+ Nouvel emprunt</button>
       </div>
 
       <!-- Table -->
@@ -323,6 +321,40 @@
     </div>
 
   </main>
+</div>
+
+<!-- ── Modal Nouvel Emprunt ────────────────────────── -->
+<div class="modal-overlay" *ngIf="showNewModal" (click)="closeNewModal()">
+  <div class="modal-box modal-form" (click)="$event.stopPropagation()">
+    <h3 class="modal-title">Nouvel emprunt</h3>
+    <p class="modal-desc">Enregistrez un emprunt pour un étudiant.</p>
+    <div class="form-group">
+      <label>Étudiant *</label>
+      <select [(ngModel)]="newEmpUserId">
+        <option [ngValue]="null">Sélectionner un étudiant...</option>
+        <option *ngFor="let user of studentUsers" [ngValue]="user.id">{{ user.nom }} ({{ user.email }})</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Livre *</label>
+      <select [(ngModel)]="newEmpBookId">
+        <option [ngValue]="null">Sélectionner un livre...</option>
+        <option *ngFor="let book of availableBooks" [ngValue]="book.id">
+          {{ book.titre }} — {{ book.auteur }} ({{ book.quantite }} dispo.)
+        </option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Date de retour prévue</label>
+      <input type="date" [(ngModel)]="newEmpReturnDate" />
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" (click)="closeNewModal()">Annuler</button>
+      <button class="modal-btn modal-btn-confirm" (click)="createEmprunt()" [disabled]="creatingEmprunt">
+        {{ creatingEmprunt ? 'Création...' : 'Créer l\'emprunt' }}
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Modal Confirmation Retour ───────────────────── -->
