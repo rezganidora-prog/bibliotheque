@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -45,7 +45,8 @@ export class AdminEmpruntsComponent implements OnInit {
   constructor(
     private auth: Auth,
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -62,11 +63,13 @@ export class AdminEmpruntsComponent implements OnInit {
       next: (response) => {
         this.emprunts = response.content || response;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Erreur chargement emprunts:', err);
         this.isLoading = false;
         this.showToast('Erreur lors du chargement des emprunts.', 'error');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -198,7 +201,8 @@ export class AdminEmpruntsComponent implements OnInit {
     this.toastMessage = message;
     this.toastType = type;
     this.toastVisible = true;
-    this.toastTimeout = setTimeout(() => { this.toastVisible = false; }, 3500);
+    this.cdr.detectChanges();
+    this.toastTimeout = setTimeout(() => { this.toastVisible = false; this.cdr.detectChanges(); }, 3500);
   }
 
   // ── Helpers date ──────────────────────────────────

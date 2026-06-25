@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { BookService, Book } from '../../services/book';
+import { Api } from '../../services/api';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -17,6 +18,14 @@ export class DashboardComponent implements OnInit {
   isLoading = true;
   errorMessage = '';
   sidebarCollapsed = false;
+
+  userId = 1;
+  activeSection = 'home';
+  userReservations: any[] = [];
+  userEmprunts: any[] = [];
+  notifications: any[] = [];
+  unreadNotificationsCount = 0;
+  showNotificationsDropdown = false;
 
   toggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
@@ -52,6 +61,7 @@ export class DashboardComponent implements OnInit {
   constructor(
     private auth: Auth,
     private bookService: BookService,
+    private apiService: Api,
     private router: Router
   ) {}
 
@@ -60,34 +70,143 @@ export class DashboardComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    this.getUserIdFromToken();
     this.loadBooks();
+    this.loadDashboardUserData();
   }
-loadBooks() {
-  this.isLoading = true;
 
-  this.bookService.getAllBooks().subscribe({
-    next: (books) => {
-
-      console.log('Livres reçus du backend :', books);
-
-      if (books && books.length > 0) {
-        this.books = books;
-      } else {
-        console.log('Aucun livre dans la base, utilisation du mock');
-        this.books = this.getMockBooks();
+  getUserIdFromToken(): void {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.userId = payload.userId || 1;
+      } catch (e) {
+        this.userId = 1;
       }
-
-      this.isLoading = false;
-    },
-
-    error: (err) => {
-      console.error('Erreur API :', err);
-
-      this.books = this.getMockBooks();
-      this.isLoading = false;
     }
-  });
-}
+  }
+
+  loadDashboardUserData(): void {
+    this.apiService.getUserEmprunts(this.userId).subscribe({
+      next: (emprunts) => {
+        this.userEmprunts = emprunts || [];
+      },
+      error: (err) => console.error('Erreur emprunts:', err)
+    });
+
+    this.apiService.getUserReservations(this.userId).subscribe({
+      next: (res) => {
+        this.userReservations = res || [];
+      },
+      error: (err) => console.error('Erreur reservations:', err)
+    });
+
+    this.loadNotifications();
+  }
+
+  loadNotifications(): void {
+    this.apiService.getUserNotifications(this.userId).subscribe({
+      next: (notifs) => {
+        this.notifications = notifs || [];
+        this.unreadNotificationsCount = this.notifications.filter(n => !n.lu).length;
+      },
+      error: (err) => console.error('Erreur notifications:', err)
+    });
+  }
+
+  markNotifAsRead(notifId: number, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.apiService.markNotificationAsRead(notifId).subscribe({
+      next: () => {
+        this.loadNotifications();
+      },
+      error: (err) => console.error('Erreur lecture notification:', err)
+    });
+  }
+
+  deleteNotif(notifId: number, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.apiService.deleteNotification(notifId).subscribe({
+      next: () => {
+        this.loadNotifications();
+      },
+      error: (err) => console.error('Erreur suppression notification:', err)
+    });
+  }
+
+  toggleNotifDropdown(event?: Event): void {
+    if (event) event.stopPropagation();
+    this.showNotificationsDropdown = !this.showNotificationsDropdown;
+  }
+
+  @HostListener('document:click')
+  closeNotifDropdown(): void {
+    this.showNotificationsDropdown = false;
+  }
+
+  setActiveSection(section: string): void {
+    this.activeSection = section;
+    this.closeNotifDropdown();
+  }
+
+  get activeLoansCount(): number {
+    return this.userEmprunts.filter(e => e.statut === 'ACTIF').length;
+  }
+
+  get expiringLoansCount(): number {
+    const today = new Date();
+    return this.userEmprunts.filter(e => {
+      if (e.statut !== 'ACTIF' || !e.dateRetourPrevue) return false;
+      const dueDate = new Date(e.dateRetourPrevue);
+      const diffTime = dueDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 3;
+    }).length;
+  }
+
+  get overdueLoansCount(): number {
+    const today = new Date();
+    return this.userEmprunts.filter(e => {
+      if (e.statut !== 'ACTIF' || !e.dateRetourPrevue) return false;
+      const dueDate = new Date(e.dateRetourPrevue);
+      return today > dueDate;
+    }).length;
+  }
+
+  get pendingReservationsCount(): number {
+    return this.userReservations.filter(r => r.status === 'EN_ATTENTE').length;
+  }
+
+  get readyReservationsCount(): number {
+    return this.userReservations.filter(r => r.status === 'APPROUVE').length;
+  }
+
+  formatDate(date: string): string {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  loadBooks() {
+    this.isLoading = true;
+    this.bookService.getAllBooks().subscribe({
+      next: (books) => {
+        console.log('Livres reçus du backend :', books);
+        if (books && books.length > 0) {
+          this.books = books;
+        } else {
+          console.log('Aucun livre dans la base, utilisation du mock');
+          this.books = this.getMockBooks();
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Erreur API :', err);
+        this.books = this.getMockBooks();
+        this.isLoading = false;
+      }
+    });
+  }
 
 
   // Filtrer et trier les livres en fonction des critères

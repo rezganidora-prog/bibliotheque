@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -51,7 +51,8 @@ export class AdminLivresComponent implements OnInit {
   constructor(
     private auth: Auth,
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -68,10 +69,12 @@ export class AdminLivresComponent implements OnInit {
       next: (books) => {
         this.books = books;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Erreur chargement livres:', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -83,7 +86,7 @@ export class AdminLivresComponent implements OnInit {
 
   get disponiblesQty(): number {
     return this.books
-      .filter(b => b.status === 'Disponible')
+      .filter(b => (b.status || 'Disponible') === 'Disponible')
       .reduce((acc, b) => acc + (b.quantite || 0), 0);
   }
 

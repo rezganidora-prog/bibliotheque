@@ -113,4 +113,25 @@ export class ApiService {
       { headers: this.getHeaders() }
     );
   }
+
+  // NOTIFICATIONS
+  sendNotification(userId: number, notification: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/notifications/send/${userId}`, notification, { headers: this.getHeaders() });
+  }
+
+  getUserNotifications(userId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/notifications/user/${userId}`, { headers: this.getHeaders() });
+  }
+
+  markNotificationAsRead(id: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/notifications/${id}/read`, {}, { headers: this.getHeaders() });
+  }
+
+  deleteNotification(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/notifications/${id}`, { headers: this.getHeaders() });
+  }
+
+  getUserReservations(userId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/reservations/user/${userId}`, { headers: this.getHeaders() });
+  }
 }

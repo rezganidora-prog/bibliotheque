@@ -39,4 +39,25 @@ export class Api {
     // Assumons que l'endpoint est /api/students/{userId} pour la mise à jour du profil étudiant
     return this.http.put<any>(`${this.apiUrl}/api/students/${userId}`, body);
   }
+
+  // NOTIFICATIONS
+  sendNotification(userId: number, notification: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/notifications/send/${userId}`, notification);
+  }
+
+  getUserNotifications(userId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/notifications/user/${userId}`);
+  }
+
+  markNotificationAsRead(id: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/notifications/${id}/read`, {});
+  }
+
+  deleteNotification(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/notifications/${id}`);
+  }
+
+  getUserReservations(userId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/reservations/user/${userId}`);
+  }
 }

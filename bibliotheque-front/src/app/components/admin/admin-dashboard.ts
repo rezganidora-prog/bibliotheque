@@ -1,10 +1,11 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Auth } from '../../services/auth';
 import { ApiService } from '../../services/api.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -53,7 +54,8 @@ export class AdminDashboardComponent implements OnInit {
     private auth: Auth,
     private apiService: ApiService,
     private router: Router,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private cdr: ChangeDetectorRef
   ) {}
 
 
@@ -153,16 +155,19 @@ export class AdminDashboardComponent implements OnInit {
                 this.totalStatusCount = totalStatus;
                 
                 this.isLoading = false;
+                this.cdr.detectChanges();
               },
               error: (err) => {
                 console.error('Erreur emprunts:', err);
                 this.isLoading = false;
+                this.cdr.detectChanges();
               }
             });
           },
           error: (err) => {
             console.error('Erreur livres:', err);
             this.isLoading = false;
+            this.cdr.detectChanges();
           }
         });
       },
@@ -170,6 +175,7 @@ export class AdminDashboardComponent implements OnInit {
         console.error('Erreur chargement stats:', err);
         this.useDefaultStats();
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

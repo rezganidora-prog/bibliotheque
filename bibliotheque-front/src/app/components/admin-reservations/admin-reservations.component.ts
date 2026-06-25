@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -24,8 +24,12 @@ export class AdminReservationsComponent implements OnInit {
   // UI state
   showRejectModal = false;
   showFilterModal = false;
+  showNotifModal = false;
   currentReservation: any = null;
   rejectReason = '';
+  notifTitle = '';
+  notifContent = '';
+  notifType = 'MESSAGE';
   sidebarCollapsed = false;
   showUserMenu = false;
   readerName = localStorage.getItem('reader_name') || 'Admin';
@@ -61,7 +65,8 @@ export class AdminReservationsComponent implements OnInit {
   constructor(
     private auth: Auth,
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -78,10 +83,12 @@ export class AdminReservationsComponent implements OnInit {
       next: (response) => {
         this.reservations = response.content || response;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Erreur chargement reservations:', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -331,6 +338,48 @@ export class AdminReservationsComponent implements OnInit {
     this.apiService.rejectReservation(this.currentReservation.id, this.rejectReason).subscribe({
       next: () => { this.loadReservations(); this.closeRejectModal(); this.closeDetail(); },
       error: (err) => console.error('Erreur refus:', err)
+    });
+  }
+
+  // ----- Notification actions -----
+  openNotifModal(reservation: any): void {
+    this.currentReservation = reservation;
+    this.notifTitle = 'Message de l\'administration - L\'Arche des Livres';
+    this.notifContent = '';
+    this.notifType = 'MESSAGE';
+    this.showNotifModal = true;
+  }
+
+  closeNotifModal(): void {
+    this.showNotifModal = false;
+    this.notifTitle = '';
+    this.notifContent = '';
+  }
+
+  sendCustomNotification(): void {
+    if (!this.notifTitle.trim() || !this.notifContent.trim()) {
+      alert('Veuillez remplir le titre et le contenu du message.');
+      return;
+    }
+    const userId = this.currentReservation?.user?.id;
+    if (!userId) {
+      alert('Impossible d\'identifier l\'étudiant destinataire.');
+      return;
+    }
+    const payload = {
+      title: this.notifTitle,
+      content: this.notifContent,
+      type: this.notifType
+    };
+    this.apiService.sendNotification(userId, payload).subscribe({
+      next: () => {
+        alert('Message / Notification envoyé(e) avec succès !');
+        this.closeNotifModal();
+      },
+      error: (err) => {
+        console.error('Erreur envoi notification:', err);
+        alert('Erreur lors de l\'envoi du message.');
+      }
     });
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -41,7 +41,8 @@ export class AdminUtilisateursComponent implements OnInit {
   constructor(
     private auth: Auth,
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -58,10 +59,12 @@ export class AdminUtilisateursComponent implements OnInit {
       next: (users) => {
         this.users = users;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Erreur chargement utilisateurs:', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

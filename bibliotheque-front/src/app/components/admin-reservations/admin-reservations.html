@@ -513,6 +513,12 @@
                 </svg>
                 Imprimer le ticket
               </button>
+              <button class="da-btn" (click)="openNotifModal(selectedReservation)" style="background:#8b5cf6;color:#fff;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Envoyer un message
+              </button>
             </div>
           </div>
         </div>
@@ -533,6 +539,35 @@
     <div class="modal-footer">
       <button (click)="rejectReservation()" class="da-btn da-cancel" style="flex:1;">Confirmer le refus</button>
       <button (click)="closeRejectModal()" class="modal-cancel">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Modal -->
+<div *ngIf="showNotifModal" class="modal-overlay">
+  <div class="modal">
+    <h2>Envoyer un message à l'étudiant</h2>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text);">Type de notification</label>
+        <select [(ngModel)]="notifType" class="modal-textarea" style="height:38px;padding:0 10px;min-height:unset;">
+          <option value="MESSAGE">Message simple</option>
+          <option value="RAPPEL">Rappel / Échéance</option>
+          <option value="RESERVATION">Information de Réservation</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text);">Sujet / Titre *</label>
+        <input type="text" [(ngModel)]="notifTitle" placeholder="Sujet..." class="modal-textarea" style="height:38px;padding:0 10px;min-height:unset;width:100%;" />
+      </div>
+      <div class="form-group">
+        <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text);">Message *</label>
+        <textarea [(ngModel)]="notifContent" placeholder="Contenu du message..." class="modal-textarea" style="min-height:120px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button (click)="sendCustomNotification()" class="da-btn da-approve" style="flex:1;background:#8b5cf6;color:#fff;">Envoyer</button>
+      <button (click)="closeNotifModal()" class="modal-cancel">Annuler</button>
     </div>
   </div>
 </div>
