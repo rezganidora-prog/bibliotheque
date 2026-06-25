@@ -21,7 +21,7 @@ export class AdminUtilisateursComponent implements OnInit {
   // Sidebar state
   sidebarCollapsed = false;
   showUserMenu = false;
-  readerName = 'Admin';
+  readerName = localStorage.getItem('reader_name') || 'Admin';
 
   // Modal CRUD state
   showUserModal = false;
@@ -50,7 +50,6 @@ export class AdminUtilisateursComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.readerName = this.auth.getReaderName() || 'Admin';
     this.loadUsers();
   }
 

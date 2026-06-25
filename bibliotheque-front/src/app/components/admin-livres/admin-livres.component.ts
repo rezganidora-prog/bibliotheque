@@ -22,7 +22,7 @@ export class AdminLivresComponent implements OnInit {
   // Sidebar state
   sidebarCollapsed = false;
   showUserMenu = false;
-  readerName = 'Admin';
+  readerName = localStorage.getItem('reader_name') || 'Admin';
 
   // Modal CRUD state
   showBookModal = false;
@@ -60,7 +60,6 @@ export class AdminLivresComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.readerName = this.auth.getReaderName() || 'Admin';
     this.loadBooks();
   }
 
@@ -162,7 +161,14 @@ export class AdminLivresComponent implements OnInit {
 
   openEditModal(book: any): void {
     this.isEditMode = true;
-    this.currentBook = { ...book };
+    this.currentBook = { 
+      ...book, 
+      status: book.disponible ? 'Disponible' : (book.quantite && book.quantite > 0 ? 'Emprunté' : 'Indisponible'),
+      category: book.category || 'Roman',
+      langue: book.langue || 'Français',
+      editeur: book.editeur || '',
+      anneePublication: book.anneePublication || 2026
+    };
     this.showBookModal = true;
   }
 

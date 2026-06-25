@@ -20,7 +20,7 @@ export class AdminDashboardComponent implements OnInit {
 
   sidebarCollapsed = false;
   searchTerm = '';
-  readerName = 'Admin';
+  readerName = localStorage.getItem('reader_name') || 'Admin';
   isLoading = true;
   activeSection = 'dashboard';
   pendingCount = 0;
@@ -95,7 +95,6 @@ export class AdminDashboardComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.readerName = this.auth.getReaderName() || 'Admin';
     this.loadDashboardData();
   }
 
@@ -449,6 +448,7 @@ export class AdminDashboardComponent implements OnInit {
 
   logout(): void {
     this.auth.logout();
+    localStorage.removeItem('reader_name');
     this.router.navigate(['/login']);
   }
 
