@@ -55,27 +55,15 @@ export class LoginComponent implements OnInit {
   }
 
   getReaderName(): string {
-    return localStorage.getItem('reader_name') || 'Lecteur';
+    return this.auth.getReaderName();
   }
 
   getReaderEmail(): string {
-    const token = localStorage.getItem('token');
-    if (!token || token.split('.').length < 2) return 'etudiant@exemple.com';
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub || 'etudiant@exemple.com';
-    } catch (e) { return ''; }
+    return this.auth.getEmail() || 'etudiant@exemple.com';
   }
 
   getReaderRole(): string {
-    const token = localStorage.getItem('token');
-    if (!token || typeof token !== 'string') return '';
-    const parts = token.split('.');
-    if (parts.length < 2) return '';
-    try {
-      const payload = JSON.parse(atob(parts[1]));
-      return payload.role || '';
-    } catch (e) { return ''; }
+    return this.auth.getRole();
   }
 
   onAccessBooks() {
@@ -89,7 +77,7 @@ export class LoginComponent implements OnInit {
 
   onLogout() {
     this.auth.logout();
-    localStorage.removeItem('reader_name');
+    this.auth.removeReaderName();
   }
 
   setMode(loginMode: boolean) {
@@ -120,10 +108,10 @@ export class LoginComponent implements OnInit {
         password: this.credentials.password
       };
 
-      this.isLoading = true; // Mettre à true avant l'appel API
+      this.isLoading = true;
       this.auth.register(regData).subscribe({
         next: () => {
-          localStorage.setItem('reader_name', regData.nom);
+          this.auth.setReaderName(regData.nom);
           // Connexion automatique après inscription
           this.loginAndRedirect(regData.email, regData.password);
         },
@@ -140,9 +128,8 @@ export class LoginComponent implements OnInit {
     this.auth.login({ email, password }).subscribe({
       next: () => {
         this.isLoading = false;
-        // Stocker le nom si pas déjà fait
-        if (!localStorage.getItem('reader_name')) {
-          localStorage.setItem('reader_name', email.split('@')[0]);
+        if (!this.auth.getReaderName() || this.auth.getReaderName() === 'Utilisateur') {
+          this.auth.setReaderName(email.split('@')[0]);
         }
 
         // Gérer le souvenir de l'adresse email

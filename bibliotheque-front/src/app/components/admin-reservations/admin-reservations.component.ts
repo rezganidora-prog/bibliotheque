@@ -35,7 +35,7 @@ export class AdminReservationsComponent implements OnInit {
   notifType = 'MESSAGE';
   sidebarCollapsed = false;
   showUserMenu = false;
-  readerName = localStorage.getItem('reader_name') || 'Admin';
+  readerName = 'Admin';
   sortBy = 'recent';
 
   // Filter modal fields
@@ -85,6 +85,7 @@ export class AdminReservationsComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    this.readerName = this.auth.getReaderName() || 'Admin';
     this.loadReservations();
   }
 

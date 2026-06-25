@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { Auth } from './auth';
 
 export interface Book {
   id?: number;
@@ -20,11 +21,10 @@ export interface Book {
 export class BookService {
   private apiUrl = `${environment.apiUrl}/api/books`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: Auth) {}
 
-  // Récupérer les en-têtes d'autorisation avec le token JWT
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
+    const token = this.auth.getToken();
     return new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`

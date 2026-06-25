@@ -44,6 +44,8 @@
   flex-direction: column;
   border-right: 1px solid rgba(212, 175, 55, 0.1);
   flex-shrink: 0;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .logo {
@@ -767,6 +769,54 @@
   .tabs-bar { flex-direction: column; }
   .favorites-grid { grid-template-columns: 1fr; }
 }
+
+/* Sidebar collapse + user section */
+.sidebar.collapsed { width: 78px; padding: 40px 12px; }
+.sidebar.collapsed .logo { justify-content: center; }
+.sidebar.collapsed .menu-item { justify-content: center; padding: 12px 0; }
+
+.sidebar-user {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar-wrap {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--color-accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 13px; flex-shrink: 0;
+}
+.user-avatar-sidebar { text-transform: uppercase; }
+.user-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.user-info strong { font-size: 13px; color: #fff; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-info span { font-size: 11px; color: var(--color-text-light); }
+.more-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--color-text-light); padding: 4px; border-radius: 6px;
+  display: flex; align-items: center;
+}
+.more-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.more-btn svg { width: 16px; height: 16px; }
+
+.user-dropdown {
+  position: absolute; bottom: 56px; left: 16px; right: 16px;
+  background: #1f2937; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px; padding: 6px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.25);
+  display: flex; flex-direction: column; gap: 2px; z-index: 100;
+}
+.dropdown-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  color: #d1d5db; font-size: 13px; font-weight: 500;
+  transition: background .15s, color .15s;
+}
+.dropdown-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.dropdown-item.danger { color: #fca5a5; }
+.dropdown-item.danger:hover { background: rgba(239,68,68,0.15); color: #fee2e2; }
+.dropdown-item svg { width: 14px; height: 14px; }
+.dropdown-item.active-item { color: var(--color-accent); }
+.dropdown-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0; }
 
 /* Inline profile editing styles */
 .btn-edit-inline {

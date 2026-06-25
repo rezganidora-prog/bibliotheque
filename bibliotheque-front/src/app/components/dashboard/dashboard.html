@@ -237,33 +237,38 @@
       </li>
     </ul>
 
-    <div class="account-menu" style="margin-top:20px;">
-      <h4 *ngIf="!sidebarCollapsed">MON COMPTE</h4>
-      <ul>
-        <li class="menu-item" (click)="goToProfile()">
-          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <!-- UTILISATEUR + DÉCONNEXION -->
+    <div class="sidebar-user" style="margin-top:auto;position:relative;">
+      <div class="user-avatar-wrap">
+        <div class="user-avatar-sidebar">{{ getInitial() }}</div>
+      </div>
+      <div class="user-info" *ngIf="!sidebarCollapsed">
+        <strong>{{ getReaderName() }}</strong>
+        <span>Étudiant(e)</span>
+      </div>
+      <button class="more-btn" *ngIf="!sidebarCollapsed" (click)="toggleUserMenu($event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle>
+        </svg>
+      </button>
+      <div class="user-dropdown" *ngIf="showUserMenu && !sidebarCollapsed">
+        <div class="dropdown-item" (click)="goToProfile()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <span class="menu-label" *ngIf="!sidebarCollapsed">Mon profil</span>
-        </li>
-      </ul>
-    </div>
-
-    <div class="help-box" *ngIf="!sidebarCollapsed">
-      <div class="help-icon-wrapper">
-        <svg class="help-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
+          <span>Mon profil</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item dropdown-item-danger" (click)="logout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Se déconnecter</span>
+        </div>
       </div>
-      <h5>Besoin d'aide ?</h5>
-      <p>Contactez notre équipe</p>
-      <button class="help-btn">Nous contacter</button>
-    </div>
-
-    <div class="sidebar-footer" *ngIf="!sidebarCollapsed">
-      <p>© 2026 L'Arche des Livres</p>
-      <p>Tous droits réservés</p>
     </div>
   </aside>
 
@@ -314,7 +319,6 @@
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
         </div>
-        <button class="logout-btn" (click)="logout()">Déconnexion</button>
       </div>
     </div>
 
@@ -514,6 +518,15 @@
         <div *ngIf="filteredBooks.length > 0; else noBooks" class="books-grid">
           <div *ngFor="let book of filteredBooks" class="book-card">
             <div class="book-cover" [ngStyle]="getBookCoverStyle(book.titre)">
+              <!-- Bouton favori -->
+              <button class="book-fav-btn"
+                      [class.fav-active]="book.id ? favoriBookIds.has(book.id) : false"
+                      (click)="toggleFavori(book); $event.stopPropagation();"
+                      title="Ajouter aux favoris">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </button>
               <!-- Badge déjà réservé -->
               <div *ngIf="isAlreadyReserved(book)" class="book-badge-reserved">Réservé</div>
               <div *ngIf="isAlreadyBorrowed(book)" class="book-badge-borrowed">Emprunté</div>

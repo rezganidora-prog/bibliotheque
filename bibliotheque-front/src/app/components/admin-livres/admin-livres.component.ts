@@ -22,7 +22,7 @@ export class AdminLivresComponent implements OnInit {
   // Sidebar state
   sidebarCollapsed = false;
   showUserMenu = false;
-  readerName = localStorage.getItem('reader_name') || 'Admin';
+  readerName = 'Admin';
 
   // Modal CRUD state
   showBookModal = false;
@@ -60,6 +60,7 @@ export class AdminLivresComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    this.readerName = this.auth.getReaderName() || 'Admin';
     this.loadBooks();
   }
 

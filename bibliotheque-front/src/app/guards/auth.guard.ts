@@ -5,10 +5,13 @@ import { Auth } from '../services/auth';
 export const authGuard: CanActivateFn = () => {
   const auth = inject(Auth);
   const router = inject(Router);
-  if (auth.isLoggedIn()) {
-    return true;
+  if (!auth.isLoggedIn()) {
+    return router.createUrlTree(['/login']);
   }
-  return router.createUrlTree(['/login']);
+  if (auth.getRole() === 'ADMIN') {
+    return router.createUrlTree(['/admin']);
+  }
+  return true;
 };
 
 export const adminGuard: CanActivateFn = () => {
@@ -17,17 +20,8 @@ export const adminGuard: CanActivateFn = () => {
   if (!auth.isLoggedIn()) {
     return router.createUrlTree(['/login']);
   }
-  const token = localStorage.getItem('token');
-  if (!token) {
-    return router.createUrlTree(['/login']);
-  }
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    if (payload.role === 'ADMIN') {
-      return true;
-    }
-  } catch {
-    // ignore invalid token
+  if (auth.getRole() === 'ADMIN') {
+    return true;
   }
   return router.createUrlTree(['/dashboard']);
 };

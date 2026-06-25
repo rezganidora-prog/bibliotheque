@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,15 +14,23 @@ import { ApiService } from '../../services/api.service';
 })
 export class StudentProfileComponent implements OnInit {
 
-  readerName = localStorage.getItem('reader_name') || 'Etudiant';
-  readerEmail = this.getEmail();
+  readerName = 'Etudiant';
+  readerEmail = '';
+  readerUniversite = '';
   userId: number = 0;
 
+  sidebarCollapsed = false;
+  showUserMenu = false;
   activeTab: string = 'overview';
   borrowHistory: any[] = [];
+  activeBorrowCount = 0;
   favoriteBooks: any[] = [];
+  favoriBookIds: Set<number> = new Set();
+  activeReservationsCount = 0;
 
   tempName = '';
+  tempEmail = '';
+  tempUniversite = '';
   tempPassword = '';
   tempConfirmPassword = '';
   isEditing = false;
@@ -34,6 +42,8 @@ export class StudentProfileComponent implements OnInit {
     private apiService: ApiService,
     private router: Router
   ) {
+    this.readerName = this.auth.getReaderName() || 'Etudiant';
+    this.readerEmail = this.auth.getEmail() || '';
     this.tempName = this.readerName;
   }
 
@@ -42,39 +52,43 @@ export class StudentProfileComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.getUserIdFromToken();
+    this.userId = this.auth.getUserId();
     if (!this.userId) {
       this.errorMessage = 'Impossible d\'identifier votre compte. Reconnectez-vous.';
       this.isLoading = false;
       return;
     }
+    this.loadUserProfile();
     this.loadBorrowHistory();
     this.loadFavoriteBooks();
+    this.loadReservations();
   }
 
-  getUserIdFromToken(): void {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      this.userId = payload.userId || payload.id || 0;
-    } catch {
-      this.userId = 0;
-    }
+  loadUserProfile(): void {
+    this.apiService.getStudentById(this.userId).subscribe({
+      next: (user: any) => {
+        this.readerName = user.nom || this.readerName;
+        this.readerEmail = user.email || '';
+        this.readerUniversite = user.universite || '';
+        this.auth.setReaderName(this.readerName);
+      },
+      error: () => {}
+    });
   }
 
   loadBorrowHistory(): void {
     this.isLoading = true;
     this.apiService.getUserEmprunts(this.userId).subscribe({
       next: (emprunts: any) => {
-        this.borrowHistory = (emprunts || []).map((e: any) => ({
-          titre: e.book?.titre,
-          auteur: e.book?.auteur,
-          dateEmprunt: e.dateEmprunt,
-          dateRetourPrevue: e.dateRetourPrevue,
-          statut: e.statut,
+        const list = emprunts || [];
+        this.borrowHistory = list.map((e: any) => ({
+          title: e.book?.titre || 'Inconnu',
+          author: e.book?.auteur || 'Inconnu',
+          borrowDate: e.dateEmprunt || '',
+          returnDate: e.dateRetourPrevue || '',
           status: e.statut === 'ACTIF' ? 'active' : 'returned'
         }));
+        this.activeBorrowCount = list.filter((e: any) => e.statut === 'ACTIF').length;
         this.isLoading = false;
       },
       error: (err: any) => {
@@ -85,29 +99,36 @@ export class StudentProfileComponent implements OnInit {
     });
   }
 
+  loadReservations(): void {
+    this.apiService.getUserReservations(this.userId).subscribe({
+      next: (reservations: any) => {
+        const list = reservations || [];
+        this.activeReservationsCount = list.filter((r: any) =>
+          r.statut === 'EN_ATTENTE' || r.statut === 'APPROUVEE'
+        ).length;
+      },
+      error: () => {
+        this.activeReservationsCount = 0;
+      }
+    });
+  }
+
   loadFavoriteBooks(): void {
-    this.apiService.getAllBooks().subscribe({
-      next: (books: any) => {
-        this.favoriteBooks = (books || []).slice(0, 6).map((b: any) => ({
-          titre: b.titre,
-          auteur: b.auteur
+    this.apiService.getUserFavoris(this.userId).subscribe({
+      next: (favoris: any) => {
+        this.favoriteBooks = (favoris || []).map((f: any) => ({
+          id: f.book?.id,
+          title: f.book?.titre,
+          author: f.book?.auteur,
+          isbn: f.book?.isbn,
+          favoriteId: f.id
         }));
+        this.favoriBookIds = new Set(this.favoriteBooks.map((b: any) => b.id));
       },
       error: () => {
         this.favoriteBooks = [];
       }
     });
-  }
-
-  getEmail(): string {
-    const token = localStorage.getItem('token');
-    if (!token || token.split('.').length < 2) return 'etudiant@exemple.com';
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub || 'etudiant@exemple.com';
-    } catch {
-      return 'etudiant@exemple.com';
-    }
   }
 
   getInitial(): string {
@@ -142,16 +163,7 @@ export class StudentProfileComponent implements OnInit {
   }
 
   getReaderRole(): string {
-    const token = localStorage.getItem('token');
-    if (!token || typeof token !== 'string') return '';
-    const parts = token.split('.');
-    if (parts.length < 2) return '';
-    try {
-      const payload = JSON.parse(atob(parts[1]));
-      return payload.role || '';
-    } catch {
-      return '';
-    }
+    return this.auth.getRole();
   }
 
   navigateTo(route: string): void {
@@ -162,9 +174,22 @@ export class StudentProfileComponent implements OnInit {
     }
   }
 
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  toggleUserMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  @HostListener('document:click')
+  closeUserMenu(): void {
+    this.showUserMenu = false;
+  }
+
   logout(): void {
     this.auth.logout();
-    localStorage.removeItem('reader_name');
     this.router.navigate(['/login']);
   }
 
@@ -172,6 +197,8 @@ export class StudentProfileComponent implements OnInit {
     this.isEditing = !this.isEditing;
     if (this.isEditing) {
       this.tempName = this.readerName;
+      this.tempEmail = this.readerEmail;
+      this.tempUniversite = this.readerUniversite;
       this.tempPassword = '';
       this.tempConfirmPassword = '';
     }
@@ -187,12 +214,25 @@ export class StudentProfileComponent implements OnInit {
       return;
     }
 
-    this.apiService.updateStudentProfile(this.userId, this.tempName.trim(), this.tempPassword || undefined).subscribe({
+    const data: any = { nom: this.tempName.trim() };
+    if (this.tempEmail && this.tempEmail !== this.readerEmail) {
+      data.email = this.tempEmail.trim();
+    }
+    if (this.tempUniversite !== this.readerUniversite) {
+      data.universite = this.tempUniversite;
+    }
+    if (this.tempPassword) {
+      data.password = this.tempPassword;
+    }
+
+    this.apiService.updateStudentProfile(this.userId, data).subscribe({
       next: () => {
-        localStorage.setItem('reader_name', this.tempName.trim());
+        this.auth.setReaderName(this.tempName.trim());
         this.readerName = this.tempName.trim();
+        this.readerEmail = this.tempEmail || this.readerEmail;
+        this.readerUniversite = this.tempUniversite;
         this.isEditing = false;
-        alert('Profil mis à jour avec succes !');
+        alert('Profil mis à jour avec succès !');
       },
       error: (err: any) => {
         console.error('Erreur mise à jour profil:', err);

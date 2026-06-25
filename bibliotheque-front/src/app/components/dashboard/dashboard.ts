@@ -19,6 +19,7 @@ export class DashboardComponent implements OnInit {
   isLoading = true;
   errorMessage = '';
   sidebarCollapsed = false;
+  showUserMenu = false;
 
   userId = 0;
   activeSection = 'home';
@@ -56,6 +57,9 @@ export class DashboardComponent implements OnInit {
     return d.toISOString().split('T')[0];
   }
 
+  // Favoris
+  favoriBookIds: Set<number> = new Set();
+
   // Search/sort
   searchTerm = '';
   selectedCategory = 'Toutes catégories';
@@ -83,17 +87,7 @@ export class DashboardComponent implements OnInit {
 
   // ── Extract userId from JWT ─────────────────────────────────────────────
   extractUserIdFromToken(): void {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      // Try multiple common claim names
-      this.userId = payload.userId || payload.id || payload.user_id || 0;
-      if (!this.userId && payload.sub) {
-        // sub might be the email; try to get from another field
-        this.userId = payload.userId || 0;
-      }
-    } catch { this.userId = 0; }
+    this.userId = this.auth.getUserId();
   }
 
   // ── Data loading ────────────────────────────────────────────────────────
@@ -106,7 +100,51 @@ export class DashboardComponent implements OnInit {
       next: (r) => { this.userReservations = r || []; this.cdr.detectChanges(); },
       error: (err) => console.error('Erreur reservations:', err)
     });
+    this.loadFavoris();
     this.loadNotifications();
+  }
+
+  loadFavoris(): void {
+    this.apiService.getUserFavoris(this.userId).subscribe({
+      next: (favoris: any) => {
+        this.favoriBookIds = new Set((favoris || []).map((f: any) => f.book?.id));
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+  }
+
+  toggleFavori(book: any): void {
+    const bookId = book.id;
+    if (!bookId) {
+      console.warn('toggleFavori: book.id is undefined', book);
+      return;
+    }
+    if (this.favoriBookIds.has(bookId)) {
+      this.apiService.removeFavori(this.userId, bookId).subscribe({
+        next: () => {
+          this.favoriBookIds.delete(bookId);
+          this.favoriBookIds = new Set(this.favoriBookIds);
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Erreur retrait favori:', err);
+          this.showToast('Erreur lors du retrait des favoris', 'error');
+        }
+      });
+    } else {
+      this.apiService.addFavori(this.userId, bookId).subscribe({
+        next: () => {
+          this.favoriBookIds.add(bookId);
+          this.favoriBookIds = new Set(this.favoriBookIds);
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Erreur ajout favori:', err);
+          this.showToast('Erreur lors de l\'ajout aux favoris', 'error');
+        }
+      });
+    }
   }
 
   loadNotifications(): void {
@@ -272,6 +310,16 @@ export class DashboardComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  toggleUserMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  @HostListener('document:click')
+  closeUserMenu(): void {
+    this.showUserMenu = false;
+  }
+
   setActiveSection(section: string): void {
     this.activeSection = section;
     this.showNotificationsDropdown = false;
@@ -320,16 +368,11 @@ export class DashboardComponent implements OnInit {
   }
 
   getReaderName(): string {
-    return localStorage.getItem('reader_name') || 'Utilisateur';
+    return this.auth.getReaderName();
   }
 
   getReaderEmail(): string {
-    const token = localStorage.getItem('token');
-    if (!token) return '';
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub || '';
-    } catch { return ''; }
+    return this.auth.getEmail();
   }
 
   getInitial(): string {
@@ -389,7 +432,6 @@ export class DashboardComponent implements OnInit {
 
   logout(): void {
     this.auth.logout();
-    localStorage.removeItem('reader_name');
     this.router.navigate(['/login']);
   }
 

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { Auth } from './auth';
 
 @Injectable({
   providedIn: 'root'
@@ -10,10 +11,10 @@ export class ApiService {
 
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private auth: Auth) { }
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
+    const token = this.auth.getToken();
     return new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : ''
@@ -40,6 +41,18 @@ export class ApiService {
 
   deleteBook(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/api/books/${id}`, { headers: this.getHeaders() });
+  }
+
+  uploadBookCover(id: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = this.auth.getToken();
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token || ''}` });
+    return this.http.post(`${this.apiUrl}/api/books/${id}/cover`, formData, { headers });
+  }
+
+  deleteBookCover(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/books/${id}/cover`, { headers: this.getHeaders() });
   }
 
   // RESERVATIONS
@@ -118,10 +131,29 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/api/students`, { headers: this.getHeaders() });
   }
 
-  updateStudentProfile(userId: number, nom: string, password?: string): Observable<any> {
-    const body: { nom: string; password?: string } = { nom };
-    if (password) body.password = password;
-    return this.http.put(`${this.apiUrl}/api/students/${userId}`, body, { headers: this.getHeaders() });
+  getStudentById(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/students/${id}`, { headers: this.getHeaders() });
+  }
+
+  updateStudentProfile(userId: number, data: { nom?: string; email?: string; password?: string; universite?: string }): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/students/${userId}`, data, { headers: this.getHeaders() });
+  }
+
+  // FAVORIS
+  getUserFavoris(userId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/favoris/user/${userId}`, { headers: this.getHeaders() });
+  }
+
+  checkFavori(userId: number, bookId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/favoris/check?userId=${userId}&bookId=${bookId}`, { headers: this.getHeaders() });
+  }
+
+  addFavori(userId: number, bookId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/favoris?userId=${userId}&bookId=${bookId}`, {}, { headers: this.getHeaders() });
+  }
+
+  removeFavori(userId: number, bookId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/favoris?userId=${userId}&bookId=${bookId}`, { headers: this.getHeaders() });
   }
 
   // NOTIFICATIONS

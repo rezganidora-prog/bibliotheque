@@ -20,7 +20,7 @@ export class AdminEmpruntsComponent implements OnInit {
   searchTerm = '';
   sidebarCollapsed = false;
   showUserMenu = false;
-  readerName = localStorage.getItem('reader_name') || 'Admin';
+  readerName = 'Admin';
 
   currentPage = 1;
   pageSize = 10;
@@ -62,6 +62,7 @@ export class AdminEmpruntsComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    this.readerName = this.auth.getReaderName() || 'Admin';
     this.loadEmprunts();
   }
 

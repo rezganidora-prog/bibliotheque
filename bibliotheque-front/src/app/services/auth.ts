@@ -11,29 +11,70 @@ export class Auth {
 
   constructor(private http: HttpClient) {}
 
-  // 🔐 Inscription (Sign Up)
   register(data: { nom: string; email: string; password: string }): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/register`, data);
   }
 
-  // 🔑 Connexion (Login) et sauvegarde du token JWT
   login(data: { email: string; password: string }): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/login`, data).pipe(
       tap(response => {
         if (response && response.token) {
-          localStorage.setItem('token', response.token);
+          sessionStorage.setItem('token', response.token);
         }
       })
     );
   }
 
-  // Vérifier si connecté
-  isLoggedIn(): boolean {
-    return !!localStorage.getItem('token');
+  getToken(): string | null {
+    return sessionStorage.getItem('token') || localStorage.getItem('token');
   }
 
-  // Déconnexion
+  isLoggedIn(): boolean {
+    return !!this.getToken();
+  }
+
   logout(): void {
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('reader_name');
     localStorage.removeItem('token');
+    localStorage.removeItem('reader_name');
+  }
+
+  getRole(): string {
+    const token = this.getToken();
+    if (!token) return '';
+    try {
+      return JSON.parse(atob(token.split('.')[1])).role || '';
+    } catch { return ''; }
+  }
+
+  getUserId(): number {
+    const token = this.getToken();
+    if (!token) return 0;
+    try {
+      const p = JSON.parse(atob(token.split('.')[1]));
+      return p.userId || p.id || 0;
+    } catch { return 0; }
+  }
+
+  getEmail(): string {
+    const token = this.getToken();
+    if (!token) return '';
+    try {
+      return JSON.parse(atob(token.split('.')[1])).sub || '';
+    } catch { return ''; }
+  }
+
+  getReaderName(): string {
+    return sessionStorage.getItem('reader_name') || localStorage.getItem('reader_name') || 'Utilisateur';
+  }
+
+  setReaderName(name: string): void {
+    sessionStorage.setItem('reader_name', name);
+    localStorage.setItem('reader_name', name);
+  }
+
+  removeReaderName(): void {
+    sessionStorage.removeItem('reader_name');
   }
 }

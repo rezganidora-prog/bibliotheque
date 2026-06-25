@@ -14,8 +14,8 @@ import { ApiService } from '../../services/api.service';
 })
 export class AdminProfileComponent implements OnInit {
 
-  readerName = localStorage.getItem('reader_name') || 'Admin';
-  readerEmail = this.getEmail();
+  readerName = 'Admin';
+  readerEmail = '';
   userId = 0;
 
   tempName = '';
@@ -31,6 +31,8 @@ export class AdminProfileComponent implements OnInit {
     private apiService: ApiService,
     private router: Router
   ) {
+    this.readerName = this.auth.getReaderName() || 'Admin';
+    this.readerEmail = this.auth.getEmail() || 'admin@arche.com';
     this.tempName = this.readerName;
   }
 
@@ -39,29 +41,11 @@ export class AdminProfileComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.getUserIdFromToken();
-  }
-
-  getUserIdFromToken(): void {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      this.userId = payload.userId || payload.id || 0;
-    } catch {
-      this.userId = 0;
-    }
+    this.userId = this.auth.getUserId();
   }
 
   getEmail(): string {
-    const token = localStorage.getItem('token');
-    if (!token || token.split('.').length < 2) return 'admin@arche.com';
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub;
-    } catch {
-      return 'admin@arche.com';
-    }
+    return this.auth.getEmail() || 'admin@arche.com';
   }
 
   getInitial(): string {
@@ -89,7 +73,6 @@ export class AdminProfileComponent implements OnInit {
 
   logout(): void {
     this.auth.logout();
-    localStorage.removeItem('reader_name');
     this.router.navigate(['/login']);
   }
 
@@ -123,7 +106,7 @@ export class AdminProfileComponent implements OnInit {
 
     this.apiService.updateUser(this.userId, payload).subscribe({
       next: () => {
-        localStorage.setItem('reader_name', this.tempName.trim());
+        this.auth.setReaderName(this.tempName.trim());
         this.readerName = this.tempName.trim();
         this.isEditing = false;
         alert('Profil administrateur mis à jour avec succès !');
