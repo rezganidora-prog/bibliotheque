@@ -25,15 +25,14 @@ export class AdminDashboardComponent implements OnInit {
   activeSection = 'dashboard';
   pendingCount = 0;
   showUserMenu = false;
-  showDatePicker = false;
 
   todayDate = new Date().toLocaleDateString('fr-FR', {
     day: 'numeric', month: 'long', year: 'numeric'
   });
 
   // ── Period filter ─────────────────────────────────────────────────────────
-  chartPeriod: 7 | 30 | 90 = 30;
-  chartPeriodLabel = '30 derniers jours';
+  dateFrom = '';
+  dateTo = '';
 
   // ── Stats ─────────────────────────────────────────────────────────────────
   statsCards: any[] = [];
@@ -74,12 +73,12 @@ export class AdminDashboardComponent implements OnInit {
   readonly DONUT_CIRC = 2 * Math.PI * 60; // ≈ 377
 
   categoriesConfig = [
-    { name: 'Littérature',     color: '#3b82f6' },
-    { name: 'Science-fiction', color: '#22c55e' },
-    { name: 'Histoire',        color: '#f59e0b' },
-    { name: 'Développement',   color: '#8b5cf6' },
-    { name: 'Jeunesse',        color: '#ec4899' },
-    { name: 'Autres',          color: '#d1d5db' }
+    { name: 'Roman',             color: '#3b82f6' },
+    { name: 'Classique',         color: '#22c55e' },
+    { name: 'Science-fiction',   color: '#f59e0b' },
+    { name: 'Fantasy',           color: '#8b5cf6' },
+    { name: 'Développement personnel', color: '#ec4899' },
+    { name: 'Autres',            color: '#d1d5db' }
   ];
 
   constructor(
@@ -95,14 +94,21 @@ export class AdminDashboardComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    this.dateTo = this.toDateStr(now);
+    this.dateFrom = this.toDateStr(thirtyDaysAgo);
     this.loadDashboardData();
   }
 
+  private toDateStr(d: Date): string {
+    return d.toISOString().split('T')[0];
+  }
+
   // ─── Period change ────────────────────────────────────────────────────────
-  setPeriod(days: 7 | 30 | 90): void {
-    this.chartPeriod = days;
-    this.chartPeriodLabel = `${days} derniers jours`;
-    if (this.allEmprunts.length) {
+  onDateChange(): void {
+    if (this.dateFrom && this.dateTo && this.allEmprunts.length) {
       this.buildChart(this.allEmprunts);
       this.cdr.detectChanges();
     }
@@ -114,7 +120,6 @@ export class AdminDashboardComponent implements OnInit {
 
     this.apiService.getStats().subscribe({
       next: (stats: any) => {
-        this.updateStatsCards(stats);
 
         this.apiService.getAllBooks().subscribe({
           next: (books: any[]) => {
@@ -149,6 +154,7 @@ export class AdminDashboardComponent implements OnInit {
                 this.buildTop5(list);
                 this.buildStatusDonut(list, books, stats);
                 this.buildChart(list);
+                this.updateStatsCards(stats, list);
 
                 this.pendingCount = list.filter((e: any) =>
                   e.statut === 'ACTIF' && new Date() > new Date(e.dateRetourPrevue)
@@ -173,16 +179,23 @@ export class AdminDashboardComponent implements OnInit {
 
   // ─── Build SVG line chart ─────────────────────────────────────────────────
   buildChart(emprunts: any[]): void {
-    const days = this.chartPeriod;
-    const now = new Date();
+    const startDate = new Date(this.dateFrom);
+    const endDate = new Date(this.dateTo);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    const diffMs = endDate.getTime() - startDate.getTime();
+    const diffDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    const days = Math.min(diffDays, 365);
+
     const buckets: { date: Date; emprunts: number; retours: number }[] = [];
 
     // Build daily buckets
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
+    for (let i = 0; i < days; i++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
       d.setHours(0, 0, 0, 0);
-      buckets.push({ date: d, emprunts: 0, retours: 0 });
+      buckets.push({ date: new Date(d), emprunts: 0, retours: 0 });
     }
 
     emprunts.forEach((e: any) => {
@@ -200,11 +213,11 @@ export class AdminDashboardComponent implements OnInit {
       }
     });
 
-    // Determine grouping (weekly for 90 days, every 5 days for 30 days, daily for 7 days)
+    // Grouping based on range
     let grouped: typeof buckets;
-    if (days === 90) {
+    if (days > 60) {
       grouped = this.groupByWeek(buckets);
-    } else if (days === 30) {
+    } else if (days > 14) {
       grouped = this.groupEveryN(buckets, 5);
     } else {
       grouped = buckets;
@@ -392,29 +405,62 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   // ─── Stats cards ──────────────────────────────────────────────────────────
-  updateStatsCards(stats: any): void {
+  updateStatsCards(stats: any, emprunts: any[] = []): void {
     const s = (html: string): SafeHtml => this.sanitizer.bypassSecurityTrustHtml(html);
+
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+    const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+    const thisMonthEmp = emprunts.filter((e: any) => {
+      const d = new Date(e.dateEmprunt);
+      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    }).length;
+    const lastMonthEmp = emprunts.filter((e: any) => {
+      const d = new Date(e.dateEmprunt);
+      return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+    }).length;
+
+    const thisMonthReturns = emprunts.filter((e: any) => {
+      if (!e.dateRetourEffective) return false;
+      const d = new Date(e.dateRetourEffective);
+      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    }).length;
+    const lastMonthReturns = emprunts.filter((e: any) => {
+      if (!e.dateRetourEffective) return false;
+      const d = new Date(e.dateRetourEffective);
+      return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+    }).length;
+
+    const calcPercent = (curr: number, prev: number) => {
+      if (prev === 0) return curr > 0 ? '+100%' : '0%';
+      const pct = Math.round(((curr - prev) / prev) * 100);
+      return pct >= 0 ? `+${pct}%` : `${pct}%`;
+    };
+
     this.statsCards = [
       { label: 'Livres disponibles', value: stats.disponible || 0, iconBg: '#eff6ff',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" style="width:24px;height:24px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`),
-        change: '12.5%', positive: true },
+        change: calcPercent(thisMonthEmp, lastMonthEmp), positive: thisMonthEmp >= lastMonthEmp },
       { label: 'Lecteurs inscrits', value: stats.etudiants || 0, iconBg: '#f0fdf4',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" style="width:24px;height:24px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`),
-        change: '15.3%', positive: true },
+        change: '—', positive: true },
       { label: 'Réservations', value: stats.reservations || 0, iconBg: '#fff7ed',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" style="width:24px;height:24px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`),
-        change: '8.7%', positive: true },
+        change: '—', positive: true },
       { label: 'Emprunts en cours', value: stats.emprunts || 0, iconBg: '#faf5ff',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" style="width:24px;height:24px"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><polyline points="12 6 12 12 16 14"/></svg>`),
-        change: '5.2%', positive: false },
+        change: calcPercent(thisMonthEmp, lastMonthEmp), positive: thisMonthEmp <= lastMonthEmp },
       { label: 'Retours en retard', value: stats.retards || 0, iconBg: '#fef2f2',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`),
-        change: '20.0%', positive: false }
+        change: calcPercent(thisMonthReturns, lastMonthReturns), positive: thisMonthReturns <= lastMonthReturns }
     ];
   }
 
   useDefaultStats(): void {
-    this.updateStatsCards({ disponible: 0, etudiants: 0, reservations: 0, emprunts: 0, retards: 0 });
+    this.updateStatsCards({ disponible: 0, etudiants: 0, reservations: 0, emprunts: 0, retards: 0 }, []);
   }
 
   // ─── UI helpers ───────────────────────────────────────────────────────────
@@ -432,15 +478,9 @@ export class AdminDashboardComponent implements OnInit {
     this.showUserMenu = !this.showUserMenu;
   }
 
-  toggleDatePicker(event: Event): void {
-    event.stopPropagation();
-    this.showDatePicker = !this.showDatePicker;
-  }
-
   @HostListener('document:click')
   closeMenus(): void {
     this.showUserMenu = false;
-    this.showDatePicker = false;
   }
 
   navigateTo(route: string): void { this.router.navigate([route]); }

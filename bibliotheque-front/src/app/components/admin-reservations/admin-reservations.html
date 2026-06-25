@@ -366,9 +366,9 @@
       <div class="pagination" *ngIf="!isLoading && totalPages > 1">
         <div style="display:flex;align-items:center;gap:8px;">
           <select class="sort-select" [(ngModel)]="pageSize" (change)="currentPage=1">
-            <option [value]="10">10 par page</option>
-            <option [value]="25">25 par page</option>
-            <option [value]="50">50 par page</option>
+            <option [ngValue]="10">10 par page</option>
+            <option [ngValue]="25">25 par page</option>
+            <option [ngValue]="50">50 par page</option>
           </select>
           <span class="pg-info">Affichage de {{ (currentPage-1)*pageSize+1 }} à {{ currentPage*pageSize > baseFiltered.length ? baseFiltered.length : currentPage*pageSize }} sur {{ baseFiltered.length }} réservations</span>
         </div>
