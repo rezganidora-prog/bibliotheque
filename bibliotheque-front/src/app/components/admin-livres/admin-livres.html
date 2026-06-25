@@ -234,8 +234,8 @@
                 </span>
               </td>
               <td>
-                <span class="status-badge" [ngClass]="getStatusBadgeClass(book.status)">
-                  {{ book.status || 'Disponible' }}
+                <span class="status-badge" [ngClass]="getStatusBadgeClass(getBookStatus(book))">
+                  {{ getBookStatus(book) }}
                 </span>
               </td>
               <td>

@@ -79,6 +79,13 @@ export class AdminLivresComponent implements OnInit {
     });
   }
 
+  // ----- Status from backend -----
+  getBookStatus(book: any): string {
+    if (book.status) return book.status;
+    if (!book.disponible) return (book.quantite && book.quantite > 0) ? 'Emprunté' : 'Indisponible';
+    return 'Disponible';
+  }
+
   // ----- Dynamic Statistics -----
   get totalBooksQty(): number {
     return this.books.reduce((acc, b) => acc + (b.quantite || 0), 0);
@@ -86,19 +93,19 @@ export class AdminLivresComponent implements OnInit {
 
   get disponiblesQty(): number {
     return this.books
-      .filter(b => (b.status || 'Disponible') === 'Disponible')
+      .filter(b => this.getBookStatus(b) === 'Disponible')
       .reduce((acc, b) => acc + (b.quantite || 0), 0);
   }
 
   get empruntesQty(): number {
     return this.books
-      .filter(b => b.status === 'Emprunté')
+      .filter(b => this.getBookStatus(b) === 'Emprunté')
       .reduce((acc, b) => acc + (b.quantite || 0), 0);
   }
 
   get indisponiblesQty(): number {
     return this.books
-      .filter(b => b.status === 'Indisponible' || (b.quantite || 0) === 0)
+      .filter(b => this.getBookStatus(b) === 'Indisponible')
       .reduce((acc, b) => acc + (b.quantite || 0), 0);
   }
 
