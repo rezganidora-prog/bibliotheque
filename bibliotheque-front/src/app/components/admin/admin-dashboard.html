@@ -34,7 +34,7 @@
           </span>
           <span class="nav-label" *ngIf="!sidebarCollapsed">Tableau de bord</span>
         </li>
-        <li class="nav-item" [class.active]="activeSection === 'livres'" (click)="navigateTo('/admin/livres')">
+        <li class="nav-item" (click)="navigateTo('/admin/livres')">
           <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -43,7 +43,7 @@
           </span>
           <span class="nav-label" *ngIf="!sidebarCollapsed">Livres</span>
         </li>
-        <li class="nav-item" [class.active]="activeSection === 'utilisateurs'" (click)="navigateTo('/admin/utilisateurs')">
+        <li class="nav-item" (click)="navigateTo('/admin/utilisateurs')">
           <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -52,7 +52,7 @@
           </span>
           <span class="nav-label" *ngIf="!sidebarCollapsed">Utilisateurs</span>
         </li>
-        <li class="nav-item" [class.active]="activeSection === 'emprunts'" (click)="navigateTo('/admin/emprunts')">
+        <li class="nav-item" (click)="navigateTo('/admin/emprunts')">
           <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
@@ -61,7 +61,7 @@
           </span>
           <span class="nav-label" *ngIf="!sidebarCollapsed">Emprunts</span>
         </li>
-        <li class="nav-item" [class.active]="activeSection === 'reservations'" (click)="navigateTo('/admin/reservations')">
+        <li class="nav-item" (click)="navigateTo('/admin/reservations')">
           <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -128,14 +128,15 @@
           </svg>
           <input type="text" placeholder="Rechercher un livre, un lecteur..." [(ngModel)]="searchTerm" />
         </div>
-        <div class="notif-btn">
+        <div class="notif-btn" (click)="navigateTo('/admin/reservations')" style="cursor:pointer;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <span class="notif-dot">3</span>
+          <span class="notif-dot" *ngIf="pendingCount > 0">{{ pendingCount }}</span>
         </div>
-        <div class="date-chip">
+        <!-- Date picker dropdown -->
+        <div class="date-chip" (click)="toggleDatePicker($event)" style="cursor:pointer;position:relative;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line>
@@ -145,6 +146,12 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
+          <!-- Date dropdown -->
+          <div class="date-dropdown" *ngIf="showDatePicker" (click)="$event.stopPropagation()">
+            <div class="date-option" (click)="setPeriod(7); showDatePicker=false" [class.active]="chartPeriod===7">7 derniers jours</div>
+            <div class="date-option" (click)="setPeriod(30); showDatePicker=false" [class.active]="chartPeriod===30">30 derniers jours</div>
+            <div class="date-option" (click)="setPeriod(90); showDatePicker=false" [class.active]="chartPeriod===90">90 derniers jours</div>
+          </div>
         </div>
       </div>
     </div>
@@ -172,7 +179,8 @@
 
     <!-- CHARTS ROW -->
     <div class="charts-row">
-      <!-- Line chart -->
+
+      <!-- ── Dynamic Line chart ─────────────────────────────────────── -->
       <div class="chart-card chart-main">
         <div class="chart-header">
           <h3>Évolution des emprunts et retours</h3>
@@ -180,52 +188,81 @@
             <span class="legend-dot blue"></span><span>Emprunts</span>
             <span class="legend-dot green"></span><span>Retours</span>
           </div>
-          <div class="chart-filter">30 derniers jours ▾</div>
+          <!-- Period filter buttons -->
+          <div class="chart-period-btns">
+            <button [class.active]="chartPeriod===7"  (click)="setPeriod(7)">7j</button>
+            <button [class.active]="chartPeriod===30" (click)="setPeriod(30)">30j</button>
+            <button [class.active]="chartPeriod===90" (click)="setPeriod(90)">90j</button>
+          </div>
         </div>
-        <div class="line-chart-wrap">
-          <svg class="line-chart-svg" viewBox="0 0 700 220" preserveAspectRatio="none">
-            <!-- Grid lines -->
-            <line x1="0" y1="44" x2="700" y2="44" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
-            <line x1="0" y1="88" x2="700" y2="88" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
-            <line x1="0" y1="132" x2="700" y2="132" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
-            <line x1="0" y1="176" x2="700" y2="176" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
-            <!-- Y labels -->
-            <text x="0" y="42" fill="#9ca3af" font-size="11">250</text>
-            <text x="0" y="86" fill="#9ca3af" font-size="11">200</text>
-            <text x="0" y="130" fill="#9ca3af" font-size="11">150</text>
-            <text x="0" y="174" fill="#9ca3af" font-size="11">50</text>
-            <text x="0" y="218" fill="#9ca3af" font-size="11">0</text>
-            <!-- Emprunts fill -->
-            <path d="M30,160 L130,88 L230,110 L330,66 L430,44 L530,55 L630,77 L700,88 L700,220 L30,220 Z" fill="rgba(59,130,246,0.08)"/>
-            <!-- Emprunts line -->
-            <path d="M30,160 L130,88 L230,110 L330,66 L430,44 L530,55 L630,77 L700,88" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <!-- Retours fill -->
-            <path d="M30,192 L130,154 L230,165 L330,143 L430,132 L530,143 L630,132 L700,143 L700,220 L30,220 Z" fill="rgba(34,197,94,0.08)"/>
-            <!-- Retours line -->
-            <path d="M30,192 L130,154 L230,165 L330,143 L430,132 L530,143 L630,132 L700,143" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <!-- X labels -->
-            <text x="25" y="215" fill="#9ca3af" font-size="10">23 Avr</text>
-            <text x="120" y="215" fill="#9ca3af" font-size="10">30 Avr</text>
-            <text x="220" y="215" fill="#9ca3af" font-size="10">7 Mai</text>
-            <text x="318" y="215" fill="#9ca3af" font-size="10">14 Mai</text>
-            <text x="418" y="215" fill="#9ca3af" font-size="10">21 Mai</text>
+        <div class="line-chart-wrap" style="position:relative;">
+          <svg class="line-chart-svg" [attr.viewBox]="'0 0 ' + chartWidth + ' ' + (chartHeight + 10)" preserveAspectRatio="none">
+            <!-- Y grid lines & labels -->
+            <ng-container *ngFor="let yl of chartYLabels">
+              <line [attr.x1]="chartPadLeft" [attr.y1]="yl.y" [attr.x2]="chartWidth" [attr.y2]="yl.y"
+                    stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
+              <text [attr.x]="chartPadLeft - 4" [attr.y]="yl.y + 4" fill="#9ca3af" font-size="10" text-anchor="end">{{ yl.label }}</text>
+            </ng-container>
+
+            <!-- Emprunts fill & line -->
+            <path [attr.d]="empruntFill" fill="rgba(59,130,246,0.08)"/>
+            <path [attr.d]="empruntPath" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+            <!-- Retours fill & line -->
+            <path [attr.d]="retourFill" fill="rgba(34,197,94,0.08)"/>
+            <path [attr.d]="retourPath" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+            <!-- X axis labels -->
+            <ng-container *ngFor="let xl of chartXLabels">
+              <text [attr.x]="xl.x" [attr.y]="chartHeight + 8" fill="#9ca3af" font-size="9" text-anchor="middle">{{ xl.label }}</text>
+            </ng-container>
+
+            <!-- Interactive dots (emprunts) -->
+            <ng-container *ngFor="let pt of empruntPoints">
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#3b82f6" opacity="0"
+                      style="cursor:pointer;"
+                      (mouseenter)="showTooltip(pt)" (mouseleave)="hideTooltip()">
+              </circle>
+            </ng-container>
+            <!-- Interactive dots (retours) -->
+            <ng-container *ngFor="let pt of retourPoints">
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#22c55e" opacity="0"
+                      style="cursor:pointer;"
+                      (mouseenter)="showTooltip(pt)" (mouseleave)="hideTooltip()">
+              </circle>
+            </ng-container>
+
+            <!-- Hover line -->
+            <line *ngIf="tooltip.visible"
+                  [attr.x1]="tooltip.x" [attr.y1]="0" [attr.x2]="tooltip.x" [attr.y2]="chartHeight"
+                  stroke="#d1d5db" stroke-width="1" stroke-dasharray="4"/>
           </svg>
+
+          <!-- Tooltip -->
+          <div class="chart-tooltip" *ngIf="tooltip.visible"
+               [style.left.px]="tooltip.x"
+               [style.top.px]="tooltip.y - 60">
+            <div class="ct-label">{{ tooltip.label }}</div>
+            <div class="ct-row"><span class="ct-dot" style="background:#3b82f6"></span> Emprunts : <strong>{{ tooltip.emprunts }}</strong></div>
+            <div class="ct-row"><span class="ct-dot" style="background:#22c55e"></span> Retours : <strong>{{ tooltip.retours }}</strong></div>
+          </div>
         </div>
       </div>
 
-      <!-- Donut category -->
+      <!-- ── Donut category ─────────────────────────────────────────── -->
       <div class="chart-card chart-donut">
         <div class="chart-header">
           <h3>Répartition par catégorie</h3>
         </div>
         <div class="donut-wrap">
           <svg viewBox="0 0 160 160" class="donut-svg">
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#3b82f6" stroke-width="28" stroke-dasharray="150 227" stroke-dashoffset="0"/>
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#22c55e" stroke-width="28" stroke-dasharray="75 302" stroke-dashoffset="-150"/>
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#f59e0b" stroke-width="28" stroke-dasharray="56 321" stroke-dashoffset="-225"/>
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#8b5cf6" stroke-width="28" stroke-dasharray="38 339" stroke-dashoffset="-281"/>
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#ec4899" stroke-width="28" stroke-dasharray="34 343" stroke-dashoffset="-319"/>
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#d1d5db" stroke-width="28" stroke-dasharray="24 353" stroke-dashoffset="-353"/>
+            <ng-container *ngFor="let sl of categorySlices">
+              <circle cx="80" cy="80" r="60" fill="none"
+                      [attr.stroke]="sl.color" stroke-width="28"
+                      [attr.stroke-dasharray]="sl.dash + ' ' + sl.gap"
+                      [attr.stroke-dashoffset]="-sl.offset"
+                      style="transition:stroke-dasharray 0.4s ease"/>
+            </ng-container>
             <text x="80" y="76" text-anchor="middle" font-size="18" font-weight="700" fill="#111827">{{ totalBooksQty }}</text>
             <text x="80" y="92" text-anchor="middle" font-size="9" fill="#6b7280">Total</text>
           </svg>
@@ -239,17 +276,20 @@
         </div>
       </div>
 
-      <!-- Donut status -->
+      <!-- ── Donut status ────────────────────────────────────────────── -->
       <div class="chart-card chart-status">
         <div class="chart-header">
           <h3>Livres par statut</h3>
         </div>
         <div class="donut-wrap donut-small">
           <svg viewBox="0 0 160 160" class="donut-svg">
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#22c55e" stroke-width="28" stroke-dasharray="267 110" stroke-dashoffset="0"/>
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#3b82f6" stroke-width="28" stroke-dasharray="56 321" stroke-dashoffset="-267"/>
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#f59e0b" stroke-width="28" stroke-dasharray="45 332" stroke-dashoffset="-323"/>
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#ef4444" stroke-width="28" stroke-dasharray="9 368" stroke-dashoffset="-368"/>
+            <ng-container *ngFor="let sl of statusSlices">
+              <circle cx="80" cy="80" r="60" fill="none"
+                      [attr.stroke]="sl.color" stroke-width="28"
+                      [attr.stroke-dasharray]="sl.dash + ' ' + sl.gap"
+                      [attr.stroke-dashoffset]="-sl.offset"
+                      style="transition:stroke-dasharray 0.4s ease"/>
+            </ng-container>
             <text x="80" y="76" text-anchor="middle" font-size="18" font-weight="700" fill="#111827">{{ totalStatusCount }}</text>
             <text x="80" y="92" text-anchor="middle" font-size="9" fill="#6b7280">Total</text>
           </svg>
@@ -271,7 +311,7 @@
       <div class="bottom-card books-added">
         <div class="bottom-card-header">
           <h3>Derniers livres ajoutés</h3>
-          <button class="voir-tout-btn" (click)="addBook()">Voir tout</button>
+          <button class="voir-tout-btn" (click)="navigateTo('/admin/livres')">Voir tout</button>
         </div>
         <div class="book-list">
           <div class="book-row" *ngFor="let b of recentBooks">
@@ -282,10 +322,17 @@
             </div>
             <span class="book-category">{{ b.category }}</span>
             <span class="book-date">{{ b.date }}</span>
-            <span class="status-pill" [class.available]="b.disponible" [style.background]="b.disponible ? '#dcfce7' : '#fee2e2'" [style.color]="b.disponible ? '#15803d' : '#991b1b'">
+            <span class="status-pill"
+                  [style.background]="b.disponible ? '#dcfce7' : '#fee2e2'"
+                  [style.color]="b.disponible ? '#15803d' : '#991b1b'">
               {{ b.disponible ? 'Disponible' : 'Indisponible' }}
             </span>
-            <button class="more-dots">⋮</button>
+            <button class="more-dots" (click)="navigateTo('/admin/livres')">⋮</button>
+          </div>
+          <!-- Empty state -->
+          <div *ngIf="!isLoading && recentBooks.length === 0" class="empty-state">
+            <p>Aucun livre enregistré.</p>
+            <button class="voir-tout-btn" style="margin-top:8px;" (click)="navigateTo('/admin/livres')">Ajouter un livre</button>
           </div>
         </div>
       </div>
@@ -294,7 +341,7 @@
       <div class="bottom-card activities">
         <div class="bottom-card-header">
           <h3>Activités récentes</h3>
-          <button class="voir-tout-btn">Voir tout</button>
+          <button class="voir-tout-btn" (click)="navigateTo('/admin/emprunts')">Voir tout</button>
         </div>
         <div class="activity-list">
           <div class="activity-row" *ngFor="let a of recentActivities">
@@ -307,6 +354,9 @@
             </div>
             <span class="activity-time">{{ a.time }}</span>
           </div>
+          <div *ngIf="!isLoading && recentActivities.length === 0" class="empty-state">
+            <p>Aucune activité récente.</p>
+          </div>
         </div>
       </div>
 
@@ -314,6 +364,7 @@
       <div class="bottom-card top5">
         <div class="bottom-card-header">
           <h3>Top 5 des livres les plus empruntés</h3>
+          <button class="voir-tout-btn" (click)="navigateTo('/admin/emprunts')">Voir tout</button>
         </div>
         <div class="top5-list">
           <div class="top5-row" *ngFor="let b of top5Books; let i = index">
@@ -323,41 +374,14 @@
               <strong>{{ b.titre }}</strong>
               <span>{{ b.auteur }}</span>
             </div>
-            <span class="top5-count">{{ b.count }}</span>
+            <span class="top5-count">{{ b.count }} emprunts</span>
+          </div>
+          <div *ngIf="!isLoading && top5Books.length === 0" class="empty-state">
+            <p>Aucun emprunt enregistré.</p>
           </div>
         </div>
       </div>
     </div>
 
   </main>
-</div>
-
-<!-- MODAL D'AJOUT / MODIFICATION -->
-<div class="modal-backdrop" *ngIf="showBookModal" (click)="closeModal()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>{{ isEditMode ? 'Modifier le livre' : 'Ajouter un nouveau livre' }}</h2>
-      <button class="modal-close" (click)="closeModal()">✕</button>
-    </div>
-    <div class="form-group">
-      <label>Titre *</label>
-      <input type="text" [(ngModel)]="currentBook.titre" placeholder="Ex: Les Misérables" />
-    </div>
-    <div class="form-group">
-      <label>Auteur *</label>
-      <input type="text" [(ngModel)]="currentBook.auteur" placeholder="Ex: Victor Hugo" />
-    </div>
-    <div class="form-group">
-      <label>ISBN *</label>
-      <input type="text" [(ngModel)]="currentBook.isbn" placeholder="Ex: 978-2070409228" />
-    </div>
-    <div class="form-group">
-      <label>Quantité *</label>
-      <input type="number" [(ngModel)]="currentBook.quantite" min="1" />
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" (click)="closeModal()">Annuler</button>
-      <button class="btn-save" (click)="saveBook()">Enregistrer</button>
-    </div>
-  </div>
 </div>
