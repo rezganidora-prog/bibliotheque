@@ -44,6 +44,21 @@ export class AdminReservationsComponent implements OnInit {
   filterStartDate: string = '';
   filterEndDate: string = '';
 
+  // Toast state
+  toastMessage = '';
+  toastType: 'success' | 'error' = 'success';
+  toastVisible = false;
+  private toastTimeout: any;
+
+  showToast(message: string, type: 'success' | 'error'): void {
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastMessage = message;
+    this.toastType = type;
+    this.toastVisible = true;
+    this.cdr.detectChanges();
+    this.toastTimeout = setTimeout(() => { this.toastVisible = false; this.cdr.detectChanges(); }, 3500);
+  }
+
   // New reservation modal fields
   books: any[] = [];
   users: any[] = [];
@@ -316,25 +331,48 @@ export class AdminReservationsComponent implements OnInit {
   // ----- Reservation actions -----
   approveReservation(id: number): void {
     this.apiService.approveReservation(id).subscribe({
-      next: () => { this.loadReservations(); this.closeDetail(); },
-      error: (err) => console.error('Erreur approbation:', err)
+      next: (res) => {
+        this.showToast('Réservation approuvée avec succès. Prête pour récupération !', 'success');
+        this.loadReservations();
+        this.selectedReservation = res;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Erreur approbation:', err);
+        const msg = err.error?.message || err.message || 'Erreur lors de l\'approbation.';
+        this.showToast(msg, 'error');
+      }
     });
   }
 
   markAsRecuperated(id: number): void {
     this.apiService.recuperateReservation(id).subscribe({
-      next: () => { this.loadReservations(); this.closeDetail(); },
+      next: (res) => {
+        this.showToast('Livre récupéré avec succès (emprunt créé).', 'success');
+        this.loadReservations();
+        this.selectedReservation = res;
+        this.cdr.detectChanges();
+      },
       error: (err) => {
         console.error('Erreur récupération reservation:', err);
+        const msg = err.error?.message || err.message || 'Erreur lors de la récupération.';
+        this.showToast(msg, 'error');
       }
     });
   }
 
   prolongReservation(id: number): void {
     this.apiService.prolongReservation(id, 7).subscribe({
-      next: () => { this.loadReservations(); this.closeDetail(); },
+      next: (res) => {
+        this.showToast('Réservation prolongée de 7 jours avec succès.', 'success');
+        this.loadReservations();
+        this.selectedReservation = res;
+        this.cdr.detectChanges();
+      },
       error: (err) => {
         console.error('Erreur prolongation réservation:', err);
+        const msg = err.error?.message || err.message || 'Erreur lors de la prolongation.';
+        this.showToast(msg, 'error');
       }
     });
   }

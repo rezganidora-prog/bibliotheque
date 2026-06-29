@@ -140,7 +140,7 @@
 
     <!-- STATS CARDS -->
     <div class="stats-grid">
-      <div class="stat-card" *ngFor="let stat of statsCards">
+      <div class="stat-card" *ngFor="let stat of statsCards" style="cursor:pointer;" (click)="navigateTo(stat.route)">
         <div class="stat-icon" [style.background]="stat.iconBg">
           <span [innerHTML]="stat.icon"></span>
         </div>

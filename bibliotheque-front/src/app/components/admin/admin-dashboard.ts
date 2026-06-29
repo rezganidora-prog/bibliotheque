@@ -441,19 +441,19 @@ export class AdminDashboardComponent implements OnInit {
     };
 
     this.statsCards = [
-      { label: 'Livres disponibles', value: stats.disponible || 0, iconBg: '#eff6ff',
+      { label: 'Livres disponibles', value: stats.disponible || 0, iconBg: '#eff6ff', route: '/admin/livres',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" style="width:24px;height:24px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`),
         change: calcPercent(thisMonthEmp, lastMonthEmp), positive: thisMonthEmp >= lastMonthEmp },
-      { label: 'Lecteurs inscrits', value: stats.etudiants || 0, iconBg: '#f0fdf4',
+      { label: 'Lecteurs inscrits', value: stats.etudiants || 0, iconBg: '#f0fdf4', route: '/admin/utilisateurs',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" style="width:24px;height:24px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`),
         change: '—', positive: true },
-      { label: 'Réservations', value: stats.reservations || 0, iconBg: '#fff7ed',
+      { label: 'Réservations', value: stats.reservations || 0, iconBg: '#fff7ed', route: '/admin/reservations',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" style="width:24px;height:24px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`),
         change: '—', positive: true },
-      { label: 'Emprunts en cours', value: stats.emprunts || 0, iconBg: '#faf5ff',
+      { label: 'Emprunts en cours', value: stats.emprunts || 0, iconBg: '#faf5ff', route: '/admin/emprunts',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" style="width:24px;height:24px"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><polyline points="12 6 12 12 16 14"/></svg>`),
         change: calcPercent(thisMonthEmp, lastMonthEmp), positive: thisMonthEmp <= lastMonthEmp },
-      { label: 'Retours en retard', value: stats.retards || 0, iconBg: '#fef2f2',
+      { label: 'Retours en retard', value: stats.retards || 0, iconBg: '#fef2f2', route: '/admin/emprunts',
         icon: s(`<svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`),
         change: calcPercent(thisMonthReturns, lastMonthReturns), positive: thisMonthReturns <= lastMonthReturns }
     ];

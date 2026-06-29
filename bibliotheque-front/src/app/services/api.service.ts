@@ -74,10 +74,6 @@ export class ApiService {
     return this.http.put(`${this.apiUrl}/api/reservations/${id}/reject`, { reason }, { headers: this.getHeaders() });
   }
 
-  recuperateReservation(id: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/api/reservations/${id}/recuperate`, {}, { headers: this.getHeaders() });
-  }
-
   createReservation(userId: number, bookId: number, notes?: string, preferredDate?: string): Observable<any> {
     let url = `${this.apiUrl}/api/reservations?userId=${userId}&bookId=${bookId}`;
     if (notes) url += `&notes=${encodeURIComponent(notes)}`;
@@ -97,6 +93,10 @@ export class ApiService {
     return this.http.put(`${this.apiUrl}/api/reservations/${id}/prolong?days=${days}`, {}, { headers: this.getHeaders() });
   }
 
+  recuperateReservation(id: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/reservations/${id}/recuperate`, {}, { headers: this.getHeaders() });
+  }
+
   // EMPRUNTS
   getEmprunts(page: number, size: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/api/emprunts?page=${page}&size=${size}`, { headers: this.getHeaders() });
@@ -112,6 +112,10 @@ export class ApiService {
 
   getOverdueEmprunts(): Observable<any> {
     return this.http.get(`${this.apiUrl}/api/emprunts/overdue`, { headers: this.getHeaders() });
+  }
+
+  deleteEmprunt(empruntId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/emprunts/${empruntId}`, { headers: this.getHeaders() });
   }
 
   createEmprunt(userId: number, bookId: number, dateRetourPrevue?: string): Observable<any> {

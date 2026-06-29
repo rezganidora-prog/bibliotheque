@@ -190,6 +190,7 @@ export class AdminEmpruntsComponent implements OnInit {
     this.apiService.returnBook(id).subscribe({
       next: () => {
         this.showToast('Livre marqué comme retourné avec succès.', 'success');
+        this.books = []; // force reload book list to get updated quantities
         this.loadEmprunts();
       },
       error: (err) => {
@@ -247,6 +248,7 @@ export class AdminEmpruntsComponent implements OnInit {
         this.creatingEmprunt = false;
         this.closeNewModal();
         this.showToast('Emprunt créé avec succès.', 'success');
+        this.books = []; // force reload book list to get updated quantities
         this.loadEmprunts();
       },
       error: (err) => {
@@ -299,6 +301,20 @@ export class AdminEmpruntsComponent implements OnInit {
     let hash = 0;
     for (let i = 0; i < (nom || '').length; i++) hash = nom.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
+  }
+
+  supprimerEmprunt(id: number): void {
+    if (!confirm('Supprimer définitivement cet emprunt ?')) return;
+    this.apiService.deleteEmprunt(id).subscribe({
+      next: () => {
+        this.showToast('Emprunt supprimé avec succès.', 'success');
+        this.loadEmprunts();
+      },
+      error: (err) => {
+        console.error('Erreur suppression emprunt:', err);
+        this.showToast('Erreur lors de la suppression.', 'error');
+      }
+    });
   }
 
   logout(): void {

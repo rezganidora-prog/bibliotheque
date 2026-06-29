@@ -673,7 +673,6 @@
                 <th style="padding:12px 16px;">Livre</th>
                 <th style="padding:12px 16px;">Date Demande</th>
                 <th style="padding:12px 16px;">Statut</th>
-                <th style="padding:12px 16px;">Note Admin</th>
                 <th style="padding:12px 16px;">Action</th>
               </tr>
             </thead>
@@ -699,7 +698,6 @@
                     {{ getReservationStatusLabel(res.status) }}
                   </span>
                 </td>
-                <td style="padding:14px 16px;color:#6b7280;font-style:italic;">{{ res.approvalNotes || '-' }}</td>
                 <td style="padding:14px 16px;">
                   <button *ngIf="res.status === 'EN_ATTENTE'"
                           (click)="cancelReservation(res)"

@@ -487,11 +487,19 @@
             </p>
             <p><strong>Date de réservation</strong><br>{{ formatDateTime(selectedReservation.reservationDate) }}</p>
             <p *ngIf="selectedReservation.approvalNotes">
-              <strong>Note de l'utilisateur</strong><br>
-              <span style="color:#6b7280;">{{ selectedReservation.approvalNotes }}</span>
+              <strong>Note de l'étudiant</strong><br>
+              <span *ngIf="selectedReservation.approvalNotes.includes('URGENTE')"
+                    style="display:inline-block;background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:4px;">
+                ⚡ URGENT
+              </span>
+              <span *ngIf="selectedReservation.approvalNotes.includes('Flexible')"
+                    style="display:inline-block;background:#eff6ff;color:#1d4ed8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:4px;">
+                🕐 Flexible
+              </span>
+              <span style="display:block;color:#374151;margin-top:4px;">{{ selectedReservation.approvalNotes }}</span>
             </p>
             <p *ngIf="!selectedReservation.approvalNotes">
-              <strong>Note de l'utilisateur</strong><br>
+              <strong>Note de l'étudiant</strong><br>
               <span style="color:#9ca3af;font-style:italic;">Aucune note</span>
             </p>
           </div>
@@ -715,4 +723,16 @@
       <button (click)="closeNotifModal()" class="modal-cancel">Annuler</button>
     </div>
   </div>
+</div>
+
+<!-- ── Toast Notification ──────────────────────────── -->
+<div class="toast" [class.toast-visible]="toastVisible" [class.toast-error]="toastType === 'error'">
+  <svg *ngIf="toastType === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+  <svg *ngIf="toastType === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
+  </svg>
+  {{ toastMessage }}
 </div>
