@@ -1597,4 +1597,252 @@
   .res-btn-confirm {
     width: 100%;
   }
+}
+
+/* ════════════════════════════════════════════════
+   BOOK DETAIL MODAL
+   ════════════════════════════════════════════════ */
+.book-detail-modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalSlideUp 0.25s ease;
+}
+
+.book-detail-header {
+  display: flex;
+  gap: 20px;
+  padding: 24px;
+  border-bottom: 1px solid var(--color-border);
+  background: #faf9f5;
+  position: relative;
+}
+
+.book-detail-cover {
+  width: 100px;
+  height: 140px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  text-align: center;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cover-title {
+  font-size: 13px;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cover-author {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.book-detail-title-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.book-detail-title-info h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+
+.book-detail-author {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 0 0 12px;
+}
+
+.book-detail-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot-badge {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+}
+
+.status-dot-badge.available {
+  background: #22c55e;
+}
+
+.status-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.modal-close:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.book-detail-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-item label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-item span {
+  font-size: 15px;
+  color: var(--color-text-dark);
+  font-weight: 500;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.btn-detail-reserve {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-accent, #d4af37);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.btn-detail-reserve:hover:not(.disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-detail-reserve.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-detail-fav {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-detail-fav:hover {
+  border-color: #f43f5e;
+  color: #f43f5e;
+  background: #fff1f2;
+}
+
+.btn-detail-fav.active {
+  border-color: #f43f5e;
+  color: #f43f5e;
+  background: #fff1f2;
+}
+
+@media (max-width: 640px) {
+  .book-detail-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .book-detail-title-info {
+    align-items: center;
+  }
+
+  .book-detail-cover {
+    width: 80px;
+    height: 112px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-actions {
+    flex-direction: column;
+  }
+
+  .btn-detail-reserve {
+    width: 100%;
+  }
 }

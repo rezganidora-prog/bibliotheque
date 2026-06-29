@@ -492,7 +492,17 @@ export class AdminDashboardComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  getBookThumbStyle(title: string): string {
+  getBookThumbStyle(book: any): string {
+    if (!book) return '';
+    const title = book.titre || '';
+    const isbn = book.isbn;
+    
+    if (isbn) {
+      const cleanIsbn = isbn.replace(/[- ]/g, '');
+      const coverUrl = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-S.jpg`;
+      return `background-image: url(${coverUrl}); background-size: cover; background-position: center; background-repeat: no-repeat; color: transparent; display: flex; align-items: center; justify-content: center; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.15);`;
+    }
+
     const map: Record<string, string> = {
       '1984': '#6c1d1d', 'étranger': '#2b3a4a', 'petit prince': '#1e3c72',
       'sapiens': '#14532d', 'misérables': '#653b1b', 'seigneur': '#1f2937',

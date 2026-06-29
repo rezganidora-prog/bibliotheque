@@ -216,7 +216,7 @@
             <tr *ngFor="let book of pagedBooks">
               <td>
                 <div class="book-cell" style="display:flex; align-items:center; gap:12px;">
-                  <div class="book-thumb" [style]="getBookThumbStyle(book.titre || '')">
+                  <div class="book-thumb" [style]="getBookThumbStyle(book)">
                     {{ (book.titre || 'B').substring(0, 2).toUpperCase() }}
                   </div>
                   <div>

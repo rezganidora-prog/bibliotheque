@@ -139,7 +139,31 @@ export class StudentProfileComponent implements OnInit {
     this.activeTab = tab;
   }
 
-  getBookCoverStyle(title: string): { [key: string]: string } {
+  getBookCoverStyle(book: any): { [key: string]: string } {
+    if (!book) return {};
+    const title = book.title || book.titre || (typeof book === 'string' ? book : '');
+    const isbn = book.isbn;
+    
+    // Fallback gradient style
+    let fallbackStyle = this.getFallbackGradientStyle(title);
+    
+    if (isbn) {
+      const cleanIsbn = isbn.replace(/[- ]/g, '');
+      const coverUrl = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-L.jpg`;
+      return {
+        'background-image': `linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.15) 100%), url(${coverUrl})`,
+        'background-size': 'cover',
+        'background-position': 'center',
+        'background-repeat': 'no-repeat',
+        'color': '#ffffff',
+        'border': '1px solid rgba(255,255,255,0.08)'
+      };
+    }
+    
+    return fallbackStyle;
+  }
+
+  private getFallbackGradientStyle(title: string): { [key: string]: string } {
     const titleLower = title.toLowerCase();
     if (titleLower.includes('harry') || titleLower.includes('potter')) {
       return { background: 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)', color: '#f0f0f0' };

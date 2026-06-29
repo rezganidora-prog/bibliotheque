@@ -40,29 +40,37 @@ export class Auth {
     localStorage.removeItem('reader_name');
   }
 
-  getRole(): string {
+  private getDecodedPayload(): any {
     const token = this.getToken();
-    if (!token) return '';
+    if (!token) return null;
     try {
-      return JSON.parse(atob(token.split('.')[1])).role || '';
-    } catch { return ''; }
+      const payloadBase64 = token.split('.')[1];
+      const decodedJson = atob(payloadBase64);
+      return JSON.parse(decodeURIComponent(escape(decodedJson)));
+    } catch {
+      try {
+        const token = this.getToken();
+        return token ? JSON.parse(atob(token.split('.')[1])) : null;
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  getRole(): string {
+    const payload = this.getDecodedPayload();
+    return payload ? (payload.role || '') : '';
   }
 
   getUserId(): number {
-    const token = this.getToken();
-    if (!token) return 0;
-    try {
-      const p = JSON.parse(atob(token.split('.')[1]));
-      return p.userId || p.id || 0;
-    } catch { return 0; }
+    const payload = this.getDecodedPayload();
+    if (!payload) return 0;
+    return payload.userId || payload.id || 0;
   }
 
   getEmail(): string {
-    const token = this.getToken();
-    if (!token) return '';
-    try {
-      return JSON.parse(atob(token.split('.')[1])).sub || '';
-    } catch { return ''; }
+    const payload = this.getDecodedPayload();
+    return payload ? (payload.sub || '') : '';
   }
 
   getReaderName(): string {

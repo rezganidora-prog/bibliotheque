@@ -37,6 +37,7 @@ export class AdminReservationsComponent implements OnInit {
   showUserMenu = false;
   readerName = localStorage.getItem('reader_name') || 'Admin';
   sortBy = 'recent';
+  viewMode: 'liste' | 'grille' = 'liste';
 
   // Filter modal fields
   filterStatus: string = '';
@@ -181,6 +182,8 @@ export class AdminReservationsComponent implements OnInit {
 
   closeDetail(): void { this.selectedReservation = null; }
 
+  setViewMode(mode: 'liste' | 'grille'): void { this.viewMode = mode; }
+
   // ----- UI helpers -----
   getInitial(): string { return this.readerName.charAt(0).toUpperCase(); }
 
@@ -272,7 +275,17 @@ export class AdminReservationsComponent implements OnInit {
     return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : nom.substring(0, 2).toUpperCase();
   }
 
-  getBookThumbStyle(title: string): string {
+  getBookThumbStyle(book: any): string {
+    if (!book) return '';
+    const title = book.titre || '';
+    const isbn = book.isbn;
+    
+    if (isbn) {
+      const cleanIsbn = isbn.replace(/[- ]/g, '');
+      const coverUrl = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-S.jpg`;
+      return `background-image: url(${coverUrl}); background-size: cover; background-position: center; background-repeat: no-repeat; color: transparent; display: flex; align-items: center; justify-content: center; border-radius: 4px; width: 32px; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15);`;
+    }
+
     const map: Record<string, string> = {
       '1984': '#6c1d1d',
       'étranger': '#2b3a4a',
@@ -318,7 +331,12 @@ export class AdminReservationsComponent implements OnInit {
   }
 
   prolongReservation(id: number): void {
-    console.log('Prolongation de la réservation:', id);
+    this.apiService.prolongReservation(id, 7).subscribe({
+      next: () => { this.loadReservations(); this.closeDetail(); },
+      error: (err) => {
+        console.error('Erreur prolongation réservation:', err);
+      }
+    });
   }
 
   printTicket(res: any): void {
@@ -359,6 +377,14 @@ export class AdminReservationsComponent implements OnInit {
     this.apiService.rejectReservation(this.currentReservation.id, this.rejectReason).subscribe({
       next: () => { this.loadReservations(); this.closeRejectModal(); this.closeDetail(); },
       error: (err) => console.error('Erreur refus:', err)
+    });
+  }
+
+  supprimerReservation(id: number): void {
+    if (!confirm('Supprimer définitivement cette réservation ?')) return;
+    this.apiService.hardDeleteReservation(id).subscribe({
+      next: () => { this.loadReservations(); this.closeDetail(); },
+      error: (err) => console.error('Erreur suppression réservation:', err)
     });
   }
 

@@ -231,16 +231,16 @@
             <option value="user">Utilisateur</option>
           </select>
           <div class="view-btns">
-            <button class="view-btn active" title="Vue liste">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="view-btn" [class.active]="viewMode === 'liste'" (click)="setViewMode('liste')" title="Vue liste">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
                 <line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line>
                 <line x1="8" y1="18" x2="21" y2="18"></line>
                 <line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line>
                 <line x1="3" y1="18" x2="3.01" y2="18"></line>
               </svg>
             </button>
-            <button class="view-btn" title="Vue grille">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="view-btn" [class.active]="viewMode === 'grille'" (click)="setViewMode('grille')" title="Vue grille">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
                 <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect>
                 <rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
               </svg>
@@ -259,8 +259,8 @@
         Aucune réservation trouvée
       </div>
 
-      <!-- Table -->
-      <div *ngIf="!isLoading && baseFiltered.length > 0" class="table-scroll">
+      <!-- Table (Liste) -->
+      <div *ngIf="!isLoading && baseFiltered.length > 0 && viewMode === 'liste'" class="table-scroll">
         <table class="res-table">
           <thead>
             <tr>
@@ -283,7 +283,7 @@
               </td>
               <td>
                 <div class="book-cell">
-                  <div class="book-thumb" [style]="getBookThumbStyle(res.book?.titre || '')">
+                  <div class="book-thumb" [style]="getBookThumbStyle(res.book)">
                     {{ (res.book?.titre || 'B').substring(0, 2).toUpperCase() }}
                   </div>
                   <div>
@@ -353,6 +353,9 @@
                       <div class="action-dropdown-item" (click)="openNotifModal(res); closeActionMenu()">
                         Envoyer un message
                       </div>
+                      <div class="action-dropdown-item danger" (click)="supprimerReservation(res.id); closeActionMenu()">
+                        Supprimer
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -384,6 +387,52 @@
       </div>
     </div>
 
+    <!-- Grid View -->
+    <div *ngIf="!isLoading && baseFiltered.length > 0 && viewMode === 'grille'" class="grid-view">
+      <div *ngFor="let res of pagedReservations; let i = index" class="grid-card"
+           (click)="selectReservation(res)" [class.selected]="selectedReservation?.id === res.id">
+        <div class="grid-card-header">
+          <div class="grid-card-thumb" [style]="getBookThumbStyle(res.book)">
+            {{ (res.book?.titre || 'B').substring(0, 2).toUpperCase() }}
+          </div>
+          <div class="grid-card-info">
+            <div class="grid-book-title">{{ res.book?.titre }}</div>
+            <div class="grid-book-author">{{ res.book?.auteur }}</div>
+          </div>
+        </div>
+        <div class="grid-card-body">
+          <div class="grid-user">
+            <span class="grid-avatar" [style.background]="getUserColor(res.user?.nom || '')">{{ getUserInitials(res.user?.nom || '') }}</span>
+            <span>{{ res.user?.nom }}</span>
+          </div>
+          <span class="status-badge" [ngClass]="getStatusClass(res.status)">{{ getStatusLabel(res.status) }}</span>
+        </div>
+        <div class="grid-card-footer">
+          <span class="grid-date">{{ formatDateShort(res.reservationDate) }}</span>
+          <span class="grid-id">{{ getResId(res, i) }}</span>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="!isLoading && baseFiltered.length > 0 && viewMode === 'grille'" class="pagination">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <select class="sort-select" [(ngModel)]="pageSize" (change)="currentPage=1">
+          <option [ngValue]="10">10 par page</option>
+          <option [ngValue]="25">25 par page</option>
+          <option [ngValue]="50">50 par page</option>
+        </select>
+        <span class="pg-info">Affichage de {{ (currentPage-1)*pageSize+1 }} à {{ currentPage*pageSize > baseFiltered.length ? baseFiltered.length : currentPage*pageSize }} sur {{ baseFiltered.length }} réservations</span>
+      </div>
+      <div class="pg-controls">
+        <button class="pg-btn" (click)="setPage(currentPage-1)" [disabled]="currentPage === 1">&#8249;</button>
+        <ng-container *ngFor="let p of pageNumbers">
+          <button class="pg-btn" [class.active]="currentPage === p" (click)="setPage(p)">{{ p }}</button>
+        </ng-container>
+        <span class="pg-ellipsis" *ngIf="totalPages > 5">...</span>
+        <button class="pg-btn" *ngIf="totalPages > 5" [class.active]="currentPage === totalPages" (click)="setPage(totalPages)">{{ totalPages }}</button>
+        <button class="pg-btn" (click)="setPage(currentPage+1)" [disabled]="currentPage === totalPages">&#8250;</button>
+      </div>
+    </div>
+
     <!-- Detail Panel -->
     <div class="detail-panel" *ngIf="selectedReservation">
       <div class="detail-header">
@@ -404,7 +453,7 @@
       <div class="detail-body">
         <!-- Book info -->
         <div class="detail-book">
-          <div class="book-cover" [style]="getBookThumbStyle(selectedReservation.book?.titre || '')">
+          <div class="book-cover" [style]="getBookThumbStyle(selectedReservation.book)">
             {{ (selectedReservation.book?.titre || 'B').substring(0, 2).toUpperCase() }}
           </div>
           <div>

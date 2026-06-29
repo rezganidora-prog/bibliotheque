@@ -11,8 +11,12 @@ export interface Book {
   isbn: string;
   quantite: number;
   disponible?: boolean;
+  status?: string;
   cover?: string;
   category?: string;
+  langue?: string;
+  editeur?: string;
+  anneePublication?: number;
 }
 
 @Injectable({

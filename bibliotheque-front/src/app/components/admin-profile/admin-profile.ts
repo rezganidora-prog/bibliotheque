@@ -43,25 +43,11 @@ export class AdminProfileComponent implements OnInit {
   }
 
   getUserIdFromToken(): void {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      this.userId = payload.userId || payload.id || 0;
-    } catch {
-      this.userId = 0;
-    }
+    this.userId = this.auth.getUserId();
   }
 
   getEmail(): string {
-    const token = localStorage.getItem('token');
-    if (!token || token.split('.').length < 2) return 'admin@arche.com';
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub;
-    } catch {
-      return 'admin@arche.com';
-    }
+    return this.auth.getEmail() || 'admin@arche.com';
   }
 
   getInitial(): string {

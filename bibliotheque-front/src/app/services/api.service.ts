@@ -14,11 +14,17 @@ export class ApiService {
   constructor(private http: HttpClient, private auth: Auth) { }
 
   private getHeaders(): HttpHeaders {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const token = this.auth.getToken();
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
-    });
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return new HttpHeaders(headers);
+  }
+
+  private authHeaders(): HttpHeaders {
+    const token = this.auth.getToken();
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 
   // STATS
@@ -81,6 +87,14 @@ export class ApiService {
 
   cancelReservation(reservationId: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/api/reservations/${reservationId}`, { headers: this.getHeaders() });
+  }
+
+  hardDeleteReservation(reservationId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/reservations/${reservationId}/hard-delete`, { headers: this.getHeaders() });
+  }
+
+  prolongReservation(id: number, days: number = 7): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/reservations/${id}/prolong?days=${days}`, {}, { headers: this.getHeaders() });
   }
 
   // EMPRUNTS
@@ -171,6 +185,10 @@ export class ApiService {
 
   deleteNotification(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/api/notifications/${id}`, { headers: this.getHeaders() });
+  }
+
+  deleteUserNotifications(userId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/notifications/user/${userId}`, { headers: this.getHeaders() });
   }
 
   getUserReservations(userId: number): Observable<any> {

@@ -256,6 +256,15 @@
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
 
+.view-btns { display: flex; gap: 4px; margin-left: auto; }
+.view-btn {
+  background: none; border: 1px solid var(--border); border-radius: 6px;
+  padding: 5px 7px; cursor: pointer; color: var(--text-muted);
+  display: flex; align-items: center;
+  transition: border-color .18s, color .18s;
+}
+.view-btn:hover, .view-btn.active { border-color: var(--accent); color: var(--accent); }
+
 .sort-row {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 0;
@@ -266,16 +275,6 @@
   padding: 5px 10px; font-size: 12.5px; color: var(--text);
   background: var(--surface); outline: none; cursor: pointer;
 }
-.view-btns { display: flex; gap: 4px; }
-.view-btn {
-  background: none; border: 1px solid var(--border);
-  border-radius: 6px; padding: 5px 7px; cursor: pointer;
-  color: var(--text-muted); display: flex; align-items: center;
-  transition: border-color .18s, color .18s;
-}
-.view-btn:hover, .view-btn.active { border-color: var(--accent); color: var(--accent); }
-.view-btn svg { width: 14px; height: 14px; }
-
 /* table */
 .table-scroll { overflow-x: auto; }
 .res-table { width: 100%; border-collapse: collapse; }
@@ -509,3 +508,32 @@
   font-size: 13.5px; font-weight: 600; transition: background .15s;
 }
 .modal-cancel:hover { background: var(--border); }
+
+/* Grid view */
+.grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.grid-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; cursor: pointer;
+  transition: box-shadow .18s, border-color .18s;
+}
+.grid-card:hover { box-shadow: var(--shadow-md); border-color: var(--accent); }
+.grid-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(212,175,55,0.2); }
+.grid-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
+.grid-card-thumb {
+  width: 40px; height: 56px; border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; color: #d4af37;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+}
+.grid-card-info { flex: 1; min-width: 0; }
+.grid-book-title { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grid-book-author { font-size: 12px; color: var(--text-muted); }
+.grid-card-body { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.grid-user { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text); }
+.grid-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.grid-card-footer { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 10px; }

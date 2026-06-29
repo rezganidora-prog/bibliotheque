@@ -299,7 +299,7 @@
         </div>
         <div class="book-list">
           <div class="book-row" *ngFor="let b of recentBooks">
-            <div class="book-thumb" [style]="getBookThumbStyle(b.titre)">{{ b.titre.substring(0,2).toUpperCase() }}</div>
+            <div class="book-thumb" [style]="getBookThumbStyle(b)">{{ b.titre.substring(0,2).toUpperCase() }}</div>
             <div class="book-row-info">
               <strong>{{ b.titre }}</strong>
               <span>{{ b.auteur }}</span>
@@ -353,7 +353,7 @@
         <div class="top5-list">
           <div class="top5-row" *ngFor="let b of top5Books; let i = index">
             <span class="top5-rank">{{ i + 1 }}</span>
-            <div class="book-thumb small" [style]="getBookThumbStyle(b.titre)">{{ b.titre.substring(0,2).toUpperCase() }}</div>
+            <div class="book-thumb small" [style]="getBookThumbStyle(b)">{{ b.titre.substring(0,2).toUpperCase() }}</div>
             <div class="top5-info">
               <strong>{{ b.titre }}</strong>
               <span>{{ b.auteur }}</span>

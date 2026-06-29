@@ -45,6 +45,10 @@ export class DashboardComponent implements OnInit {
   modalUrgency = 'NORMAL'; // URGENT | NORMAL | FLEXIBLE
   isSubmittingReservation = false;
 
+  // ── Book Detail Modal ──────────────────────────────────────────────────
+  showBookDetailModal = false;
+  selectedBookDetail: any = null;
+
   // Today's date as min for date picker
   get todayStr(): string {
     return new Date().toISOString().split('T')[0];
@@ -129,7 +133,8 @@ export class DashboardComponent implements OnInit {
         },
         error: (err: any) => {
           console.error('Erreur retrait favori:', err);
-          this.showToast('Erreur lors du retrait des favoris', 'error');
+          const msg = err.error?.message || err.message || 'Erreur lors du retrait des favoris';
+          this.showToast(msg, 'error');
         }
       });
     } else {
@@ -141,7 +146,8 @@ export class DashboardComponent implements OnInit {
         },
         error: (err: any) => {
           console.error('Erreur ajout favori:', err);
-          this.showToast('Erreur lors de l\'ajout aux favoris', 'error');
+          const msg = err.error?.message || err.message || 'Erreur lors de l\'ajout aux favoris';
+          this.showToast(msg, 'error');
         }
       });
     }
@@ -193,6 +199,19 @@ export class DashboardComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // ── Book Detail Modal ──────────────────────────────────────────────────
+  openBookDetail(book: any): void {
+    this.selectedBookDetail = book;
+    this.showBookDetailModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeBookDetail(): void {
+    this.showBookDetailModal = false;
+    this.selectedBookDetail = null;
+    this.cdr.detectChanges();
+  }
+
   confirmReservation(): void {
     if (!this.modalBook || this.isSubmittingReservation) return;
     if (!this.userId) {
@@ -226,7 +245,9 @@ export class DashboardComponent implements OnInit {
           this.showToast(`"${bookTitle}" réservé avec succès ! En attente de validation de l'administrateur.`, 'success');
           this.apiService.getUserReservations(this.userId).subscribe({
             next: (r) => { this.userReservations = r || []; this.cdr.detectChanges(); },
-            error: () => {}
+            error: (err: any) => {
+              console.error('Erreur chargement favoris:', err);
+            }
           });
           this.cdr.detectChanges();
         },
@@ -288,7 +309,11 @@ export class DashboardComponent implements OnInit {
   deleteNotif(notifId: number, event?: Event): void {
     if (event) event.stopPropagation();
     this.apiService.deleteNotification(notifId).subscribe({
-      next: () => { this.notifications = this.notifications.filter(n => n.id !== notifId); this.unreadNotificationsCount = this.notifications.filter(n => !n.lu).length; this.cdr.detectChanges(); },
+      next: () => {
+        this.notifications = this.notifications.filter(n => n.id !== notifId);
+        this.unreadNotificationsCount = this.notifications.filter(n => !n.lu).length;
+        this.cdr.detectChanges();
+      },
       error: () => {}
     });
   }
@@ -435,7 +460,30 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  getBookCoverStyle(title: string): { [key: string]: string } {
+  getBookCoverStyle(book: any): { [key: string]: string } {
+    if (!book) return {};
+    const title = book.titre || book.title || '';
+    const isbn = book.isbn;
+    
+    let fallbackStyle = this.getFallbackGradientStyle(title);
+    
+    if (isbn) {
+      const cleanIsbn = isbn.replace(/[- ]/g, '');
+      const coverUrl = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-L.jpg`;
+      return {
+        'background-image': `linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.15) 100%), url(${coverUrl})`,
+        'background-size': 'cover',
+        'background-position': 'center',
+        'background-repeat': 'no-repeat',
+        'color': '#ffffff',
+        'border': '1px solid rgba(255,255,255,0.08)'
+      };
+    }
+    
+    return fallbackStyle;
+  }
+
+  private getFallbackGradientStyle(title: string): { [key: string]: string } {
     const map: Record<string, { bg: string; color: string }> = {
       'harry': { bg: 'linear-gradient(135deg,#1b3c2e,#0d2117)', color: '#d4af37' },
       'petit prince': { bg: 'linear-gradient(135deg,#1e3c72,#2a5298)', color: '#f7f5ee' },
