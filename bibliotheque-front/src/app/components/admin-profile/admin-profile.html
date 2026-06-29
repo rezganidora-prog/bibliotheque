@@ -1,10 +1,9 @@
 <div class="admin-layout">
 
-  <!-- SIDEBAR — identique au dashboard admin -->
+  <!-- SIDEBAR -->
   <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
-
     <div class="sidebar-header">
-      <div class="logo" (click)="navigateTo('/admin')">
+      <div class="logo">
         <div class="logo-icon-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -19,14 +18,22 @@
       <button class="collapse-btn" (click)="toggleSidebar()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline *ngIf="!sidebarCollapsed" points="15 18 9 12 15 6"></polyline>
-          <polyline *ngIf="sidebarCollapsed"  points="9 18 15 12 9 6"></polyline>
+          <polyline *ngIf="sidebarCollapsed" points="9 18 15 12 9 6"></polyline>
         </svg>
       </button>
     </div>
 
     <nav class="sidebar-nav">
       <ul class="nav-list">
-        <!-- Mon profil — seul item, toujours actif -->
+        <li class="nav-item" (click)="navigateTo('/admin')">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Tableau de bord</span>
+        </li>
         <li class="nav-item active">
           <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -39,7 +46,6 @@
       </ul>
     </nav>
 
-    <!-- Footer utilisateur avec dropdown -->
     <div class="sidebar-user" style="position:relative;">
       <div class="user-avatar-wrap">
         <div class="user-avatar-sidebar">{{ getInitial() }}</div>
@@ -53,17 +59,7 @@
           <circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle>
         </svg>
       </button>
-
-      <!-- Dropdown -->
       <div class="user-dropdown" *ngIf="showUserMenu && !sidebarCollapsed">
-        <div class="dropdown-item active-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span>Mon profil</span>
-        </div>
-        <div class="dropdown-divider"></div>
         <div class="dropdown-item dropdown-item-danger" (click)="logout()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -74,127 +70,185 @@
         </div>
       </div>
     </div>
-
   </aside>
 
-  <!-- CONTENU PRINCIPAL -->
-  <main class="content">
+  <!-- MAIN -->
+  <main class="main-content">
 
-    <!-- TOP BAR -->
-    <div class="topbar">
-      <div class="topbar-left">
-        <h1>Mon Profil Administrateur</h1>
-        <p>Gérez vos informations de compte</p>
+    <!-- Top Header -->
+    <div class="top-header">
+      <div class="header-left">
+        <h1>Bonjour, {{ readerName.split(' ')[0] }} ! 👋</h1>
+        <p>Voici un aperçu de votre activité</p>
       </div>
-      <div class="topbar-right">
-        <div class="admin-chip">
-          <div class="chip-avatar">{{ getInitial() }}</div>
-          <div *ngIf="true">
-            <strong>{{ readerName }}</strong>
-            <span>Administrateur</span>
-          </div>
+      <div class="header-right">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" placeholder="Rechercher un livre, un auteur..." />
         </div>
+        <div class="notif-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notif-dot"></span>
+        </div>
+        <div class="header-avatar">{{ getInitial() }}</div>
       </div>
     </div>
 
-    <!-- CARTE HERO -->
+    <!-- Profile Hero Banner -->
     <div class="profile-hero">
       <div class="hero-bg"></div>
       <div class="hero-content">
-        <div class="hero-avatar">{{ getInitial() }}</div>
+        <div class="hero-avatar-wrap">
+          <div class="hero-avatar">{{ getInitial() }}</div>
+        </div>
         <div class="hero-info">
           <h2>{{ readerName }}</h2>
-          <p class="hero-email">{{ readerEmail }}</p>
-          <div class="hero-badges">
-            <span class="badge badge-admin">Administrateur</span>
-            <span class="badge badge-active">Staff L'Arche</span>
+          <div class="hero-meta">
+            <span class="hero-email">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              {{ readerEmail }}
+            </span>
+            <span class="hero-role-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              Administrateur
+            </span>
           </div>
         </div>
-        <div class="hero-actions">
-          <button class="btn-edit-profile" (click)="toggleEdit()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-            Modifier le profil
-          </button>
-          <button class="btn-dashboard" (click)="navigateTo('/admin')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect>
-              <rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect>
-            </svg>
-            Tableau de bord
-          </button>
-        </div>
+
       </div>
     </div>
 
-    <!-- CARTE INFOS -->
-    <div class="info-card">
-      <div class="info-card-header">
-        <div class="header-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <!-- Two Column Layout -->
+    <div class="profile-grid">
+
+      <!-- Left: Informations personnelles -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:#d4af37;">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
+          <h3>Informations personnelles</h3>
         </div>
-        <h3>Informations personnelles &amp; professionnelles</h3>
-        <button *ngIf="!isEditing" class="btn-edit-inline" (click)="toggleEdit()">
+        <div class="detail-list" *ngIf="!isEditing">
+          <div class="detail-row">
+            <div class="detail-left">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span class="detail-label">Nom complet</span>
+            </div>
+            <span class="detail-value">{{ readerName }}</span>
+          </div>
+          <div class="detail-row">
+            <div class="detail-left">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              <span class="detail-label">Email</span>
+            </div>
+            <span class="detail-value">{{ readerEmail }}</span>
+          </div>
+          <div class="detail-row">
+            <div class="detail-left">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+              <span class="detail-label">Téléphone</span>
+            </div>
+            <span class="detail-value">{{ readerTelephone || 'Non renseigné' }}</span>
+          </div>
+          <div class="detail-row">
+            <div class="detail-left">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <span class="detail-label">Rôle</span>
+            </div>
+            <span class="detail-value role-badge">Administrateur</span>
+          </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="settings-form" *ngIf="isEditing">
+          <div class="form-group">
+            <label>Nom complet</label>
+            <input type="text" [(ngModel)]="tempName" />
+          </div>
+          <div class="form-group">
+            <label>Téléphone</label>
+            <input type="tel" [(ngModel)]="tempTelephone" placeholder="Ex: 06 12 34 56 78" />
+          </div>
+          <div class="form-group">
+            <label>Nouveau mot de passe</label>
+            <input type="password" [(ngModel)]="tempPassword" placeholder="Laisser vide pour ne pas changer" />
+          </div>
+          <div class="form-group">
+            <label>Confirmer le mot de passe</label>
+            <input type="password" [(ngModel)]="tempConfirmPassword" placeholder="Confirmer" />
+          </div>
+          <div class="form-actions">
+            <button class="btn-save" (click)="saveProfile()">Enregistrer</button>
+            <button class="btn-cancel" (click)="toggleEdit()">Annuler</button>
+          </div>
+        </div>
+
+        <button class="btn-edit-full" *ngIf="!isEditing" (click)="toggleEdit()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
           </svg>
-          Modifier
+          Modifier le profil
         </button>
       </div>
 
-      <!-- Vue statique -->
-      <div class="detail-list" *ngIf="!isEditing">
-        <div class="detail-row">
-          <span class="detail-label">Nom complet</span>
-          <span class="detail-value">{{ readerName }}</span>
+      <!-- Right: Activités récentes -->
+      <div class="info-card">
+        <div class="info-card-header" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:#d4af37;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <h3>Activités récentes</h3>
+          </div>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">Email</span>
-          <span class="detail-value">{{ readerEmail }}</span>
+
+        <div class="activity-list" *ngIf="recentEmprunts.length > 0">
+          <div class="activity-item" *ngFor="let act of recentEmprunts">
+            <div class="activity-dot" [class.active]="act.status === 'En cours' && !act.overdue" [class.overdue]="act.overdue" [class.inactive]="act.status === 'Retourné'"></div>
+            <div class="activity-info">
+              <div class="activity-title">{{ act.title }}</div>
+              <div class="activity-meta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                {{ act.user }} · {{ act.date | date:'dd MMM yyyy' }}
+              </div>
+            </div>
+            <span class="activity-status" [class.en-cours]="act.status === 'En cours' && !act.overdue" [class.en-retard]="act.overdue" [class.retourne]="act.status === 'Retourné'">
+              {{ act.overdue ? 'En retard' : act.status }}
+            </span>
+          </div>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">ID Administrateur</span>
-          <span class="detail-value">ADM20260012</span>
+
+        <div class="empty-state" *ngIf="recentEmprunts.length === 0 && !isLoading">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:#d4af37;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <p>Aucune activité récente</p>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">Date d'embauche</span>
-          <span class="detail-value">12 Janvier 2026</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Rôle du système</span>
-          <span class="detail-value">Super Administrateur</span>
+
+        <div class="loading-state" *ngIf="isLoading">
+          <div class="spinner"></div>
+          <p>Chargement...</p>
         </div>
       </div>
 
-      <!-- Formulaire d'édition -->
-      <div class="settings-form" *ngIf="isEditing">
-        <div class="form-group">
-          <label>Nom complet</label>
-          <input type="text" [(ngModel)]="tempName" />
-        </div>
-        <div class="form-group">
-          <label>Email (lecture seule)</label>
-          <input type="text" [value]="readerEmail" disabled />
-        </div>
-        <div class="form-group">
-          <label>Nouveau mot de passe</label>
-          <input type="password" [(ngModel)]="tempPassword" placeholder="Laisser vide pour ne pas changer" />
-        </div>
-        <div class="form-group">
-          <label>Confirmer le mot de passe</label>
-          <input type="password" [(ngModel)]="tempConfirmPassword" placeholder="Confirmer le nouveau mot de passe" />
-        </div>
-        <div class="form-actions">
-          <button class="btn-save" (click)="saveProfile()">Enregistrer</button>
-          <button class="btn-cancel" (click)="toggleEdit()">Annuler</button>
-        </div>
-      </div>
     </div>
 
   </main>

@@ -132,6 +132,10 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/api/users`, { headers: this.getHeaders() });
   }
 
+  getUserById(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/users/${id}`, { headers: this.getHeaders() });
+  }
+
   createUser(user: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/api/users`, user, { headers: this.getHeaders() });
   }

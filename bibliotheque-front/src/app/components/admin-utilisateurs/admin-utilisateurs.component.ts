@@ -171,7 +171,8 @@ export class AdminUtilisateursComponent implements OnInit {
         },
         error: (err) => {
           console.error('Erreur suppression utilisateur:', err);
-          alert('Erreur lors de la suppression de l\'utilisateur.');
+          const msg = err.error?.message || err.message || 'Erreur lors de la suppression de l\'utilisateur.';
+          alert(msg);
         }
       });
     }
