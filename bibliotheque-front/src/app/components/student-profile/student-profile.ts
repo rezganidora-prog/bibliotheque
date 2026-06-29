@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, HostListener, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -46,7 +46,8 @@ export class StudentProfileComponent implements OnInit {
   constructor(
     private auth: Auth,
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.readerName = this.auth.getReaderName() || 'Etudiant';
     this.readerEmail = this.auth.getEmail() || '';
@@ -79,8 +80,11 @@ export class StudentProfileComponent implements OnInit {
         this.readerUniversite = user.universite || '';
         this.readerTelephone = user.telephone || '';
         this.auth.setReaderName(this.readerName);
+        this.cdr.detectChanges();
       },
-      error: () => {}
+      error: () => {
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -98,11 +102,13 @@ export class StudentProfileComponent implements OnInit {
         }));
         this.activeBorrowCount = list.filter((e: any) => e.statut === 'ACTIF').length;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('Erreur chargement emprunts:', err);
         this.borrowHistory = [];
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -114,9 +120,11 @@ export class StudentProfileComponent implements OnInit {
         this.activeReservationsCount = list.filter((r: any) =>
           r.statut === 'EN_ATTENTE' || r.statut === 'APPROUVEE'
         ).length;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.activeReservationsCount = 0;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -132,9 +140,11 @@ export class StudentProfileComponent implements OnInit {
           favoriteId: f.id
         }));
         this.favoriBookIds = new Set(this.favoriteBooks.map((b: any) => b.id));
+        this.cdr.detectChanges();
       },
       error: () => {
         this.favoriteBooks = [];
+        this.cdr.detectChanges();
       }
     });
   }
@@ -292,6 +302,7 @@ export class StudentProfileComponent implements OnInit {
         this.readerUniversite = this.tempUniversite;
         this.readerTelephone = this.tempTelephone;
         this.isEditing = false;
+        this.cdr.detectChanges();
         alert('Profil mis à jour avec succès !');
       },
       error: (err: any) => {
